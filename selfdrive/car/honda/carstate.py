@@ -1,3 +1,8 @@
+# This class reads CAN messages from the Powertrain CAN Bus,
+# parses them using the dbc file, and converts them in a common
+# car state format. See CarState structure in
+# /data/openpilot/cereal/car.capnp.
+
 import os
 from common.numpy_fast import interp
 from selfdrive.can.parser import CANParser
@@ -41,6 +46,16 @@ def parse_gear_shifter(can_gear_shifter, car_fingerprint):
        return "drive"
      elif can_gear_shifter == 0x2:
         return "sport"
+
+  elif car_fingerprint in (CAR.KIA): #JP
+     if can_gear_shifter == 0x8: #JP
+       return "reverse" #JP
+     elif can_gear_shifter == 0x4: #JP
+       return "park" #JP
+     elif can_gear_shifter == 0x20: #JP
+       return "drive" #JP
+     elif can_gear_shifter == 0x2: #JP
+        return "sport" #JP
 
   return "unknown"
 
@@ -137,6 +152,10 @@ def get_can_signals(CP):
     dbc_f = 'honda_pilot_touring_2017_can_generated.dbc'
     signals += [("MAIN_ON", "SCM_BUTTONS", 0),
                 ("CAR_GAS", "GAS_PEDAL_2", 0)]
+  elif CP.carFingerprint == CAR.KIA: #JP
+    dbc_f = 'honda_kia_soul_2016_can_generated.dbc' #JP
+    signals += [("MAIN_ON", "SCM_BUTTONS", 0), #JP commented out
+                ("CAR_GAS", "GAS_PEDAL_2", 0)] #JP commented out
 
   # add gas interceptor reading if we are using it
   if CP.enableGas:

@@ -4,6 +4,7 @@ import sys
 import fcntl
 import errno
 import signal
+import time #JP
 
 if __name__ == "__main__":
   if os.path.isfile("/init.qcom.rc") \
@@ -72,26 +73,29 @@ EON = os.path.exists("/EON")
 
 # comment out anything you don't want to run
 managed_processes = {
-  "uploader": "selfdrive.loggerd.uploader",
+#  "uploader": "selfdrive.loggerd.uploader",
   "controlsd": "selfdrive.controls.controlsd",
-  "radard": "selfdrive.controls.radard",
-  "loggerd": ("selfdrive/loggerd", ["./loggerd"]),
-  "logmessaged": "selfdrive.logmessaged",
-  "tombstoned": "selfdrive.tombstoned",
-  "logcatd": ("selfdrive/logcatd", ["./logcatd"]),
-  "proclogd": ("selfdrive/proclogd", ["./proclogd"]),
+#  "radard": "selfdrive.controls.radard",
+#  "loggerd": ("selfdrive/loggerd", ["./loggerd"]),
+#  "logmessaged": "selfdrive.logmessaged",
+#  "tombstoned": "selfdrive.tombstoned",
+#  "logcatd": ("selfdrive/logcatd", ["./logcatd"]),
+#  "proclogd": ("selfdrive/proclogd", ["./proclogd"]),
   "boardd": ("selfdrive/boardd", ["./boardd"]),   # not used directly
   "pandad": "selfdrive.pandad",
   "ui": ("selfdrive/ui", ["./ui"]),
   "visiond": ("selfdrive/visiond", ["./visiond"]),
   "sensord": ("selfdrive/sensord", ["./sensord"]),
-  "gpsd": ("selfdrive/sensord", ["./gpsd"]),
+#  "gpsd": ("selfdrive/sensord", ["./gpsd"]),
   "updated": "selfdrive.updated",
   #"gpsplanner": "selfdrive.controls.gps_plannerd",
 }
 
 running = {}
 def get_running():
+  #with open('mgrTT','a+') as f: #JP
+  #  f.write('manager.py -> get_running method') #JP
+  cloudlog.info('manager.py -> get_running method') #JP
   return running
 
 # due to qualcomm kernel bugs SIGKILLing visiond sometimes causes page table corruption
@@ -123,6 +127,8 @@ car_started_processes = [
 def register_managed_process(name, desc, car_started=False):
   global managed_processes, car_started_processes, persistent_processes
   print "registering", name
+  cloudlog.info('>>> registering ' + name) #JP
+  cloudlog.info('>>> car_started = ' + str(car_started)) #JP
   managed_processes[name] = desc
   if car_started:
     car_started_processes.append(name)
@@ -162,12 +168,16 @@ def start_managed_process(name):
     return
   proc = managed_processes[name]
   if isinstance(proc, basestring):
-    cloudlog.info("starting python %s" % proc)
+    with open("mgrTT", "a+") as f: #JP
+      f.write('\n starting python %s\n' % proc) #JP
+    cloudlog.info("starting python %s\n" % proc)
     running[name] = Process(name=name, target=launcher, args=(proc, gctx))
   else:
     pdir, pargs = proc
     cwd = os.path.join(BASEDIR, pdir)
-    cloudlog.info("starting process %s" % name)
+    cloudlog.info("starting process %s\n" % name)
+    with open("mgrTT", "a+") as f: #JP
+      f.write('\n starting process %s \n' % name) #JP
     running[name] = Process(name=name, target=nativelauncher, args=(pargs, cwd))
   running[name].start()
 
@@ -175,11 +185,11 @@ def prepare_managed_process(p):
   proc = managed_processes[p]
   if isinstance(proc, basestring):
     # import this python
-    cloudlog.info("preimporting %s" % proc)
+    cloudlog.info("preimporting %s\n" % proc)
     importlib.import_module(proc)
   else:
     # build this process
-    cloudlog.info("building %s" % (proc,))
+    cloudlog.info("building %s\n" % (proc,))
     try:
       subprocess.check_call(["make", "-j4"], cwd=os.path.join(BASEDIR, proc[0]))
     except subprocess.CalledProcessError:
@@ -228,8 +238,9 @@ def cleanup_all_processes(signal, frame):
     kill_managed_process(name)
   cloudlog.info("everything is dead")
 
-
-# ****************** run loop ******************
+# ##############################################
+# ****************** run loop ****************** #JP what loop?
+################################################
 
 def manager_init():
   global gctx
@@ -272,7 +283,7 @@ def manager_init():
 
 def system(cmd):
   try:
-    cloudlog.info("running %s" % cmd)
+    #cloudlog.info("running %s" % cmd) #JP commented
     subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
   except subprocess.CalledProcessError, e:
     cloudlog.event("running failed",
@@ -367,16 +378,21 @@ class LocationStarter(object):
       cloudlog.event("location_start", location=location.to_dict() if location else None)
       return location.speed*3.6 > 10
 
+#################################
+# ####### MANAGER_THREAD ########
+#################################
 def manager_thread():
+  print '> selfdrive/manager.py manager_thread()\n' #JP
   # now loop
   context = zmq.Context()
   thermal_sock = messaging.pub_sock(context, service_list['thermal'].port)
   health_sock = messaging.sub_sock(context, service_list['health'].port)
   location_sock = messaging.sub_sock(context, service_list['gpsLocation'].port)
 
-  cloudlog.info("manager start")
-  cloudlog.info({"environ": os.environ})
+#  cloudlog.info("manager start") #JP commented out
+#  cloudlog.info({"environ": os.environ}) #JP commented out
 
+  print '> selfdrive/manager.py start_managed_processes() for persistent processes' #JP
   for p in persistent_processes:
     start_managed_process(p)
 
@@ -389,7 +405,9 @@ def manager_thread():
   if os.getenv("NOBOARD") is None:
     start_managed_process("pandad")
 
+  print '> selfdrive/manager.py manager_thread() call params = Params()' #JP
   params = Params()
+  print '> selfdrive/manager.py manager_thread() call params = ', params #JP
 
   passive = params.get("Passive") == "1"
   passive_starter = LocationStarter()
@@ -403,14 +421,20 @@ def manager_thread():
 
   health_sock.RCVTIMEO = 1500
 
+  cloudCount = 0 #JP
+
   while 1:
     # get health of board, log this in "thermal"
+    print '\n> selfdrive/manager.py manager_thread() while 1 loop' #JP
+    print '> selfdrive/manager.py manager_thread() while 1 loop td = messaging.recv_sock(health_sock, wait=True)' #JP
     td = messaging.recv_sock(health_sock, wait=True)
+    #print '   td = ',td #JP
+    print '> selfdrive/manager.py manager_thread() while 1 loop location = messaging.recv_sock(location_sock)' #JP
     location = messaging.recv_sock(location_sock)
 
     location = location.gpsLocation if location else None
 
-    print td
+    #print td #JP commented
 
     # replace thermald
     msg = read_thermal()
@@ -438,8 +462,10 @@ def manager_thread():
     msg.thermal.started = started_ts is not None
     msg.thermal.startedTs = int(1e9*(started_ts or 0))
 
+    print '> selfdrive/manager.py manager_thread() call thermal_sock.send()' #JP
     thermal_sock.send(msg.to_bytes())
-    print msg
+    print '> selfdrive/manager.py manager_thread() msg = ...' #JP
+    #print '   msg = ',msg 
 
     # uploader is gated based on the phone temperature
     if max_temp > 85.0:
@@ -459,6 +485,7 @@ def manager_thread():
     accepted_terms = params.get("HasAcceptedTerms") == "1"
 
     should_start = ignition
+    print '> selfdrive/manager.py manager_thread() should_start = ', should_start #JP
 
     # start on gps in passive mode
     if passive and not ignition_seen:
@@ -477,15 +504,19 @@ def manager_thread():
     if max_temp > 107.0 or msg.thermal.bat >= 63000:
       # TODO: Add a better warning when this is happening
       should_start = False
+    #with open('mgrTT','a+') as mgrTT: #JP
+    #   mgrTT.write('the value of should_start NOW is '+str(should_start)+'\n') #JP
 
     if should_start:
       if not started_ts:
+        print '> selfdrive/manager.py manager_thread(), while 1 loop, if should_start call params.car_start()' #JP
         params.car_start()
         started_ts = sec_since_boot()
       for p in car_started_processes:
         if p == "loggerd" and logger_dead:
           kill_managed_process(p)
         else:
+          print '> selfdrive/manager.py call start_managed_process() ',p #JP
           start_managed_process(p)
     else:
       started_ts = None
@@ -500,20 +531,29 @@ def manager_thread():
         battery_was_high = True
 
     # check the status of all processes, did any of them die?
-    for p in running:
-      cloudlog.debug("   running %s %s" % (p, running[p]))
 
-    # report to server once per minute
-    if (count%60) == 0:
-      cloudlog.event("STATUS_PACKET",
-        running=running.keys(),
-        count=count,
-        health=(td.to_dict() if td else None),
-        thermal=msg.to_dict())
+    for p in running:
+      #cloudlog.debug("   running %s %s" % (p, running[p])) #JP
+      if cloudCount == 0: #JP
+        pass #JP
+         #cloudlog.debug("   running %s %s" % (p, running[p])) #JP
+
+    # report to server once per minute #JP commented out next 6 lines
+    #if (count%60) == 0:
+    #  cloudlog.event("STATUS_PACKET",
+    #    running=running.keys(),
+    #    count=count,
+    #    health=(td.to_dict() if td else None),
+    #    thermal=msg.to_dict())
+
+    cloudCount += 1 #JP
+    if cloudCount == 5: #JP
+      print '> selfdrive/manager.py manager_thread() looping in while 1, count = ', cloudCount #JP
+      #cloudCount = 0 #JP
 
     if do_uninstall:
       break
-
+    print '> selfdrive/manager.py manager_thread() while 1 loop END\n' #JP
     count += 1
 
 def get_installed_apks():
@@ -553,44 +593,49 @@ def update_apks():
     if app not in installed:
       installed[app] = None
 
-  cloudlog.info("installed apks %s" % (str(installed), ))
+  #cloudlog.info("installed apks %s" % (str(installed), )) #JP commented
 
-  for app in installed.iterkeys():
+# JP commented out the whole for loop
+#  for app in installed.iterkeys():
+#
+#    apk_path = os.path.join(BASEDIR, "apk/"+app+".apk")
+#    if not os.path.exists(apk_path):
+#      apk_path = os.path.join(BASEDIR, "apk/external/out/"+app+".apk")
+#    if not os.path.exists(apk_path):
+#      continue
 
-    apk_path = os.path.join(BASEDIR, "apk/"+app+".apk")
-    if not os.path.exists(apk_path):
-      apk_path = os.path.join(BASEDIR, "apk/external/out/"+app+".apk")
-    if not os.path.exists(apk_path):
-      continue
+#    h1 = hashlib.sha1(open(apk_path).read()).hexdigest()
+#    h2 = None
+#    if installed[app] is not None:
+#      h2 = hashlib.sha1(open(installed[app]).read()).hexdigest()
+#      cloudlog.info("comparing version of %s  %s vs %s" % (app, h1, h2))
 
-    h1 = hashlib.sha1(open(apk_path).read()).hexdigest()
-    h2 = None
-    if installed[app] is not None:
-      h2 = hashlib.sha1(open(installed[app]).read()).hexdigest()
-      cloudlog.info("comparing version of %s  %s vs %s" % (app, h1, h2))
+#    if h2 is None or h1 != h2:
+#      cloudlog.info("installing %s" % app)
 
-    if h2 is None or h1 != h2:
-      cloudlog.info("installing %s" % app)
-
-      success = install_apk(apk_path)
-      if not success:
-        cloudlog.info("needing to uninstall %s" % app)
-        system("pm uninstall %s" % app)
-        success = install_apk(apk_path)
+#      success = install_apk(apk_path)
+#      if not success:
+#        cloudlog.info("needing to uninstall %s" % app)
+#        system("pm uninstall %s" % app)
+#        success = install_apk(apk_path)
 
       assert success
 
 def manager_update():
-  update_apks()
+  #update_apks() #JP commented out
+  pass #JP
 
 def manager_prepare():
+  print '    > selfdrive/manager.py manager_prepare()' #JP
 
   # build cereal first
   subprocess.check_call(["make", "-j4"], cwd=os.path.join(BASEDIR, "cereal"))
 
   # build all processes
   os.chdir(os.path.dirname(os.path.abspath(__file__)))
+  print '    > selfdrive/manager.py manager_prepare() build all processes' #JP
   for p in managed_processes:
+    print '     > call prepare_managed_process()', p #JP
     prepare_managed_process(p)
 
 def uninstall():
@@ -601,6 +646,19 @@ def uninstall():
   os.system("service call power 16 i32 0 s16 recovery i32 1")
 
 def main():
+  global timeSignature, year, month, day, hour #JP
+  year = str(time.localtime().tm_year) #JP
+  month = str(time.localtime().tm_mon) #JP
+  day = str(time.localtime().tm_mday) #JP
+  hour = str(time.localtime().tm_hour) #JP
+  minute = str(time.localtime().tm_min) #JP
+  timeSignature = "%s %s %s %s %s " %(year, month, day, hour, minute) #JP
+
+  print '***************************'
+  print '******** START ************' #JP
+  print '***************************\n'
+  print timeSignature + ' selfdrive/manager.py main()\n' #JP
+
   if os.getenv("NOLOG") is not None:
     del managed_processes['loggerd']
     del managed_processes['tombstoned']
@@ -621,12 +679,14 @@ def main():
 
   # support additional internal only extensions
   try:
-    import selfdrive.manager_extensions
+    import selfdrive.manager_extensions #JP Where is this file?
     selfdrive.manager_extensions.register(register_managed_process)
   except ImportError:
     pass
 
+  print '> selfdrive/manager.py main() call params = Params()' #JP
   params = Params()
+  print '> selfdrive/manager.py main() call params.manager_start()' #JP
   params.manager_start()
 
   # set unset params
@@ -647,12 +707,15 @@ def main():
   if os.getenv("PREPAREONLY") is not None:
     spinner_proc = None
   else:
-    spinner_proc = subprocess.Popen(["./spinner", "loading..."],
+    spinner_proc = subprocess.Popen(["./spinner", "Hi Bill!  We are loading..."],
       cwd=os.path.join(BASEDIR, "selfdrive", "ui", "spinner"),
       close_fds=True)
   try:
+    print '> selfdrive/manager.py main() try: call to manager_update()' #JP
     manager_update()
+    print '> selfdrive/manager.py main() try: call to manager_init()' #JP
     manager_init()
+    print '> selfdrive/manager.py main() try: call to manager_prepare()' #JP
     manager_prepare()
   finally:
     if spinner_proc:
@@ -665,6 +728,7 @@ def main():
   signal.signal(signal.SIGTERM, lambda signum, frame: sys.exit(1))
 
   try:
+    print '> selfdrive/manager.py main() try: call to manager_thread()' #JP
     manager_thread()
   except Exception:
     traceback.print_exc()

@@ -52,6 +52,7 @@ class LatControl(object):
     self.pid.reset()
 
   def update(self, active, v_ego, angle_steers, steer_override, d_poly, angle_offset, VM, PL):
+    print '         > selfdrive/controls/lib/latcontrol.py LatControl(object).update()' #JP
     cur_time = sec_since_boot()
     self.mpc_updated = False
     if self.last_mpc_ts < PL.last_md_ts:

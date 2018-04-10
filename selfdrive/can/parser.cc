@@ -19,6 +19,7 @@
 #include "cereal/gen/cpp/log.capnp.h"
 
 #include "common.h"
+//#include "common/swaglog.h"
 
 #define DEBUG(...)
 // #define DEBUG printf
@@ -155,6 +156,8 @@ class CANParser {
       zmq_connect(subscriber, "tcp://127.0.0.1:8006");
     }
 
+//    fprintf(stderr, "selfdrive/can/parser.cc CANParser call dbc = dbc_lookup(dbc_name)"); #JP
+//    LOGW("selfdrive/can/parser.cc CANParser call dbc = dbc_lo    okup(dbc_name)");
     dbc = dbc_lookup(dbc_name);
     assert(dbc);
 

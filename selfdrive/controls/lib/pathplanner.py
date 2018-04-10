@@ -4,6 +4,7 @@ from selfdrive.controls.lib.latcontrol_helpers import model_polyfit, calc_desire
 
 class PathPlanner(object):
   def __init__(self):
+    print '> selfdrive/controls/lib/pathplanner.py PathPlanner(object).__init__()' #JP
     self.d_poly = [0., 0., 0., 0.]
     self.c_poly = [0., 0., 0., 0.]
     self.c_prob = 0.
@@ -16,6 +17,7 @@ class PathPlanner(object):
     self.lane_width = 3.7
 
   def update(self, v_ego, md):
+    print '  > selfdrive/controls/lib/pathplanner.py.update(v_ego, md)' #JP
     if md is not None:
       p_poly = model_polyfit(md.model.path.points, self._path_pinv)  # predicted path
       l_poly = model_polyfit(md.model.leftLane.points, self._path_pinv)  # left line

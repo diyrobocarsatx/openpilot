@@ -16,7 +16,9 @@ except ImportError:
 
 class CarInterface(object):
   def __init__(self, CP, sendcan=None):
+    print '> selfdrive/car/toyota/interface.py CarInterface(object).__init__(CP)' #JP
     self.CP = CP
+    print '> selfdrive/car/toyota/interface.py CarInterface(object).__init__(CP) call VehicleModel(CP)' #JP
     self.VM = VehicleModel(CP)
 
     self.frame = 0
@@ -26,14 +28,18 @@ class CarInterface(object):
     self.cruise_enabled_prev = False
 
     # *** init the major players ***
+    print '> selfdrive/car/toyota/interface.py CarInterface(object).__init__(CP) call self.CS = CarState(CP)' #JP
     self.CS = CarState(CP)
 
+    print '  > selfdrive/car/toyota/interface.py CarInterface(object)__init__(CP) call self.cp = get_can_parser(CP)' #JP
     self.cp = get_can_parser(CP)
 
     # sending if read only is False
     if sendcan is not None:
       self.sendcan = sendcan
+      print '  > selfdrive/car/toyota/interface.py CarInterface(object)__init__(CP) call self.CC = CarController(CP)' #JP
       self.CC = CarController(CP.carFingerprint, CP.enableCamera, CP.enableDsu, CP.enableApgs)
+  print '  > selfdrive/car/toyota/interface.py CarInterface(object)__init__(CP) END' #JP
 
   @staticmethod
   def compute_gb(accel, speed):
@@ -164,11 +170,12 @@ class CarInterface(object):
 
   # returns a car.CarState
   def update(self, c):
+    print '        > selfdrive/car/toyota/interface.py CarInterface(object).update(c) returns car.Carstate' #JP
     # ******************* do can recv *******************
     canMonoTimes = []
-
     self.cp.update(int(sec_since_boot() * 1e9), False)
 
+    print '        > selfdrive/car/toyota/interface.py.update(c) call self.CS.update(self.cp)' #JP
     self.CS.update(self.cp)
 
     # create message

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import sys #JP
 import json
 from copy import copy
 import zmq
@@ -20,7 +21,9 @@ from selfdrive.controls.lib.longcontrol import LongControl, STARTING_TARGET_SPEE
 from selfdrive.controls.lib.latcontrol import LatControl
 from selfdrive.controls.lib.alertmanager import AlertManager
 from selfdrive.controls.lib.vehicle_model import VehicleModel
+# from selfdrive.swaglog import cloudlog #JP
 
+import time #JP
 
 V_CRUISE_MAX = 144
 V_CRUISE_MIN = 8
@@ -31,34 +34,39 @@ AWARENESS_TIME = 360.      # 6 minutes limit without user touching steering whee
 AWARENESS_PRE_TIME = 20.   # a first alert is issued 20s before start decelerating the car
 
 State = log.Live100Data.ControlState
+print '> selfdrive/controls/controlsd.py State = log.Live100Data.ControlsState = ', State #JP
 
 class Calibration:
   UNCALIBRATED = 0
   CALIBRATED = 1
   INVALID = 2
 
-
 # True when actuators are controlled
 def isActive(state):
   return state in [State.enabled, State.softDisabling]
-
 
 # True if system is engaged
 def isEnabled(state):
   return (isActive(state) or state == State.preEnabled)
 
-
 def data_sample(CI, CC, thermal, calibration, health, poller, cal_status, overtemp, free_space):
-
+  print '  ** selfdrive/controls/controlsd.py data_sample(CI, CC) return CS, events' #JP
+  print '        > read can and compute cars states' #JP
   # *** read can and compute car states ***
+  print '        >  call CS = CI.update(CC)' #JP
   CS = CI.update(CC)
+  #print 'CS = ' + str(CS) #JP
   events = list(CS.events)
+  print '        > events = list(CS.events)' #JP
+  #print '*** events =' + str(events) #JP
 
   td = None
   cal = None
   hh = None
 
   for socket, event in poller.poll(0):
+    print '*** socket %s *** event %s' %(str(socket),str(event)) #JP
+
     if socket is thermal:
       td = messaging.recv_one(socket)
     elif socket is calibration:
@@ -105,7 +113,9 @@ def data_sample(CI, CC, thermal, calibration, health, poller, cal_status, overte
 
 
 def calc_plan(CS, events, PL, LoC, v_cruise_kph, awareness_status):
+   print '  ** selfdrive/controls/controlsd.py calc_plan(CS, events)' #JP
    # plan runs always, independently of the state
+   print '  ** selfdrive/controls/controlsd.py calc_plan(CS, events) call plan_packet = PL.update(CS)' #JP
    plan_packet = PL.update(CS, LoC, v_cruise_kph, awareness_status < -0.)
    plan = plan_packet.plan
    plan_ts = plan_packet.logMonoTime
@@ -117,12 +127,14 @@ def calc_plan(CS, events, PL, LoC, v_cruise_kph, awareness_status):
    # unexpected vehicle accelerations
    if CS.brakePressed and plan.vTargetFuture >= STARTING_TARGET_SPEED:
      events.append(create_event('noTarget', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE]))
-
+   #print '    plan = ',plan #JP
+   #print '    plan_ts = ',plan_ts #JP
    return plan, plan_ts
 
 
 def state_transition(CS, CP, state, events, soft_disable_timer, v_cruise_kph, AM):
-  # compute conditional state transitions and execute actions on state transitions
+  print '  ** selfdrive/controls/controlsd.py state_transition(CS, CP, state, events)' #JP
+# compute conditional state transitions and execute actions on state transitions
   enabled = isEnabled(state)
 
   # handle button presses. TODO: this should be in state_control, but a decelCruise press
@@ -207,18 +219,26 @@ def state_transition(CS, CP, state, events, soft_disable_timer, v_cruise_kph, AM
     elif not get_events(events, [ET.PRE_ENABLE]):
       state = State.enabled
 
+  #print '    state = ', state
   return state, soft_disable_timer, v_cruise_kph, v_cruise_kph_last
 
-
+#*************************************
+#****    STATE_CONTROL function ******
+#*************************************
 def state_control(plan, CS, CP, state, events, v_cruise_kph, v_cruise_kph_last, AM, rk,
                   awareness_status, PL, LaC, LoC, VM, angle_offset, rear_view_allowed, rear_view_toggle):
-  # Given the state, this function returns the actuators
-
+  print '  ** selfdrive/controls/controlsd.py state_control(plan, CS, CP, state, events)' #JP
+# Given the state, this function returns the actuators
+  print '       > Given the state, this functions returns the actuators' #JP
   # reset actuators to zero
   actuators = car.CarControl.Actuators.new_message()
+  print '      > actuators =' , actuators #JP
+#  cloudlog.info('>> actuators = ' + str(actuators)) #JP
 
   enabled = isEnabled(state)
+  print '      > enabled = ', isEnabled(state) #JP
   active = isActive(state)
+  print '      > active = ', active #JP
 
   for b in CS.buttonEvents:
     # button presses for rear view
@@ -266,15 +286,23 @@ def state_control(plan, CS, CP, state, events, v_cruise_kph, v_cruise_kph_last, 
     angle_offset = learn_angle_offset(active, CS.vEgo, angle_offset,
                                       PL.PP.c_poly, PL.PP.c_prob, CS.steeringAngle,
                                       CS.steeringPressed)
-
+    print '  angle_offset = ', angle_offset #JP
   # *** gas/brake PID loop ***
+  print '> selfdrive/controls/controlsd.py state_control() call actuators.gas, actuators.break = LoC.update (active, CS.vEgo, ...)' #JP
   actuators.gas, actuators.brake = LoC.update(active, CS.vEgo, CS.brakePressed, CS.standstill, CS.cruiseState.standstill,
                                               v_cruise_kph, plan.vTarget, plan.vTargetFuture, plan.aTarget,
                                               CP, PL.lead_1)
+  print '   >>> gas/brake PID loop' #JP
+  print '       > actuators.gas = ',actuators.gas #JP
+  print '       > actuators.brake = ',actuators.brake #JP
 
   # *** steering PID loop ***
+  print '   >>> steering PID loop' #JP
+  print '> selfdrive/controls/controlsd.py state_control() call actuators.steer = LaC.update (active, CS.vEgo, ...)' #JP
   actuators.steer = LaC.update(active, CS.vEgo, CS.steeringAngle,
                                CS.steeringPressed, plan.dPoly, angle_offset, VM, PL)
+
+  print '       > actuators.steer = ',actuators.steer #JP
 
   # send a "steering required alert" if saturation count has reached the limit
   if LaC.sat_flag and CP.steerLimitAlert:
@@ -283,7 +311,7 @@ def state_control(plan, CS, CP, state, events, v_cruise_kph, v_cruise_kph_last, 
   if CP.enableCruise and CS.cruiseState.enabled:
     v_cruise_kph = CS.cruiseState.speed * CV.MS_TO_KPH
 
-  # reset conditions for the 6 minutes timout
+  # reset conditions for the 6 minutes timeout
   if CS.buttonEvents or \
      v_cruise_kph != v_cruise_kph_last or \
      CS.steeringPressed or \
@@ -300,13 +328,18 @@ def state_control(plan, CS, CP, state, events, v_cruise_kph, v_cruise_kph_last, 
 
   return actuators, v_cruise_kph, awareness_status, angle_offset, rear_view_toggle
 
-
+# ..................................
+# DATA_SEND method
+# ..................................
 def data_send(plan, plan_ts, CS, CI, CP, VM, state, events, actuators, v_cruise_kph, rk, carstate,
               carcontrol, live100, livempc, AM, rear_view_allowed, rear_view_toggle, awareness_status,
               LaC, LoC, angle_offset, passive):
 
+  print '  ** selfdrive/controls/controlsd.py data_send(plan, CS, CI, CP, VM, state, events, actuators, car control) return CC' #JP
   # ***** control the car *****
+  print '      > control the car' #JP
 
+  print '      > controlsd.py data_send() call CC = car.CarControl.new_message' #JP
   CC = car.CarControl.new_message()
 
   if not passive:
@@ -332,6 +365,8 @@ def data_send(plan, plan_ts, CS, CI, CP, VM, state, events, actuators, v_cruise_
     CC.hudControl.audibleAlert = AM.audible_alert
 
     # send car controls over can
+    print 'send car controls over can CI.apply(CC)' #JP
+
     CI.apply(CC)
 
   # ***** publish state to logger *****
@@ -361,11 +396,14 @@ def data_send(plan, plan_ts, CS, CI, CP, VM, state, events, actuators, v_cruise_
   dat.live100.angleSteers = CS.steeringAngle
   dat.live100.curvature = VM.calc_curvature(CS.steeringAngle * CV.DEG_TO_RAD, CS.vEgo)
   dat.live100.steerOverride = CS.steeringPressed
+  print '     > selfdrive/controls/controlsd.py data_send(): car state' #JP
 
   # high level control state
   dat.live100.state = state
+  #print 'dat.live100.state = ',state #JP
 
   # longitudinal control state
+  print '     > selfdrive/controls/controlsd.py data_send(): longitudinal control state' #JP
   dat.live100.longControlState = LoC.long_control_state
   dat.live100.vPid = float(LoC.v_pid)
   dat.live100.vCruise = float(v_cruise_kph)
@@ -374,6 +412,7 @@ def data_send(plan, plan_ts, CS, CI, CP, VM, state, events, actuators, v_cruise_
   dat.live100.ufAccelCmd = float(LoC.pid.f)
 
   # lateral control state
+  print '     > selfdrive/controls/controlsd.py data_send(): lateral control state' #JP
   dat.live100.angleSteersDes = float(LaC.angle_steers_des)
   dat.live100.upSteer = float(LaC.pid.p)
   dat.live100.uiSteer = float(LaC.pid.i)
@@ -396,18 +435,25 @@ def data_send(plan, plan_ts, CS, CI, CP, VM, state, events, actuators, v_cruise_
   live100.send(dat.to_bytes())
 
   # broadcast carState
+  print '     > selfdrive/controls/controlsd.py data_send(): broadcast car state' #JP
   cs_send = messaging.new_message()
   cs_send.init('carState')
   # TODO: override CS.events with all the cumulated events
   cs_send.carState = copy(CS)
+  #print '   cs_send.carState = ',cs_send.carState #JP
+  #print '   cs_send.carState = copy(CS)' #JP
   carstate.send(cs_send.to_bytes())
 
-  # broadcast carControl
+  # broadcast carControls
+  print '     > selfdrive/controls/controlsd.py data_send(): broadcast car control' #JP
+  print '        controlsd.py data_send() call cc_send = messaging.new_message()' #JP
   cc_send = messaging.new_message()
   cc_send.init('carControl')
   cc_send.carControl = copy(CC)
+  print '        controlsd.py data_send() call carcontrol.send(cc_send.to_bybtes())' #JP
   carcontrol.send(cc_send.to_bytes())
-  #print [i.name for i in events]
+  #print '   events: ',[i.name for i in events]
+  #print '   events: ' #JP
 
   # publish mpc state at 20Hz
   if hasattr(LaC, 'mpc_updated') and LaC.mpc_updated:
@@ -419,15 +465,25 @@ def data_send(plan, plan_ts, CS, CI, CP, VM, state, events, actuators, v_cruise_
     dat.liveMpc.delta = list(LaC.mpc_solution[0].delta)
     livempc.send(dat.to_bytes())
 
+  #print 'CC = ', CC #JP
+  #print 'CC = ' #JP
+  print '     >  controlsd.py data_send() type(CC) = ', type(CC) #JP
+  print '     > selfdrive/controls/controlsd.py data_send(): END\n' #JP
   return CC
 
-
+##########################################
+#### CONTROLS_THREAD function ############
+##########################################
 def controlsd_thread(gctx, rate=100):
   # start the loop
+
+  print '> selfdrive/controls/controlsd.py controls_thread()\n' #JP
+
   set_realtime_priority(3)
 
   context = zmq.Context()
 
+  print '> selfdrive/controls/controlsd.py controls_thread()  call params = Params()' #JP
   params = Params()
 
   # pub
@@ -437,6 +493,8 @@ def controlsd_thread(gctx, rate=100):
   livempc = messaging.pub_sock(context, service_list['liveMpc'].port)
 
   passive = params.get("Passive") != "0"
+  print '   > passive = ', passive, '\n' #JP
+
   if not passive:
     sendcan = messaging.pub_sock(context, service_list['sendcan'].port)
   else:
@@ -448,11 +506,24 @@ def controlsd_thread(gctx, rate=100):
   health = messaging.sub_sock(context, service_list['health'].port, conflate=True, poller=poller)
   cal = messaging.sub_sock(context, service_list['liveCalibration'].port, conflate=True, poller=poller)
 
+  print '> selfdrive/controls/controlsd.py logcan subscription socket' #JP
   logcan = messaging.sub_sock(context, service_list['can'].port)
+#  try:
+#    myLogcan = logcan.recv()
+#  except:
+#    cloudlog.info('myLogcan creates a problem') #JP
+#  else:
+#    cloudlog.info('*** myLogcan = ' + str(myLogcan)) #JP
 
+#JP CarControl is a struct in cereal/car.capnp
   CC = car.CarControl.new_message()
-
+  #print 'CC = ', CC #JP
+  print '> selfdrive/controls/controlsd.py CC = car.CarControl.new_message()' #JP
+#JP CI is Car Interface and CP is Car Parameters
+  print '> selfdrive/controls/controlsd.py call get_car() returns CI, CP ()' #JP
   CI, CP = get_car(logcan, sendcan, 1.0 if passive else None)
+#  print 'CI = ', CI
+#  print 'CP = ', CP
 
   if CI is None:
     raise Exception("unsupported car")
@@ -462,10 +533,16 @@ def controlsd_thread(gctx, rate=100):
 
   fcw_enabled = params.get("IsFcwEnabled") == "1"
 
+  print '> selfdrive/controls/controlsd.py controls_thread() call PL = Planner(CP)' #JP
   PL = Planner(CP, fcw_enabled)
+  print '> selfdrive/controls/controlsd.py controls_thread() call LoC = LongControl(CP, CI.compute_b)' #JP
   LoC = LongControl(CP, CI.compute_gb)
+  print '> selfdrive/controls/controlsd.py controls_thread() call VM = VehicleModel(CP)' #JP
   VM = VehicleModel(CP)
+  #print 'Vehicle Model = ',VM #JP
+  print '> selfdrive/controls/controlsd.py controls_thread() call LaC = LatControl(VM)' #JP
   LaC = LatControl(VM)
+  print '> selfdrive/controls/controlsd.py controls_thread() call AM = AlertManager()' #JP
   AM = AlertManager()
 
   if not passive:
@@ -501,32 +578,52 @@ def controlsd_thread(gctx, rate=100):
 
   prof = Profiler(False)  # off by default
 
+  myCount = 0 #JP This to limit the number of loops
+
   while 1:
 
+    myCount += 1 #JP
+    if myCount == 2: break #JP
+    print '\n*** selfdrive/controls/controlsd.py controls_thread(): while 1 loop'
+    #sys.exit(0) #JP
+    print '   counter = ', myCount #JP
+    
     prof.checkpoint("Ratekeeper", ignore=True)  # rk is here
 
-    # sample data and compute car events
+    # sample data and compute car eventsLatControl
+    print '> selfdrive/controls/controlsd.py controls_thread() call data_sample(CI, CC, ...)' #JP
     CS, events, cal_status, overtemp, free_space = data_sample(CI, CC, thermal, cal, health, poller, cal_status,
                                                                overtemp, free_space)
     prof.checkpoint("Sample")
 
     # define plan
+    print '> selfdrive/controls/controlsd.py controls_thread() call calc_plan(CS, events, PL, LoC, ...)' #JP
     plan, plan_ts = calc_plan(CS, events, PL, LoC, v_cruise_kph, awareness_status)
     prof.checkpoint("Plan")
 
     if not passive:
       # update control state
+      print '> selfdrive/controls/controlsd.py controls_thread() call state_transitions(CS, CP, state, events, ...) # update control state' #JP
       state, soft_disable_timer, v_cruise_kph, v_cruise_kph_last = state_transition(CS, CP, state, events, soft_disable_timer,
                                                                                     v_cruise_kph, AM)
       prof.checkpoint("State transition")
 
     # compute actuators
+    # print '    > compute actuators' #JP
+    print '> selfdrive/controls/controlsd.py controls_thread() call state_control(plan, CS, CP, state, events, ...) # compute actuators' #JP
     actuators, v_cruise_kph, awareness_status, angle_offset, rear_view_toggle = state_control(plan, CS, CP, state, events, v_cruise_kph,
                                                                             v_cruise_kph_last, AM, rk, awareness_status, PL, LaC, LoC, VM,
                                                                             angle_offset, rear_view_allowed, rear_view_toggle)
+    
     prof.checkpoint("State Control")
 
     # publish data
+#    with open('mgrTT','a+') as f: #JP
+#      f.write('CC ' + str(CC) + '\n') #JP
+#      f.write('CP ' + str(CP) + '\n') #JP
+#      f.write('CI ' + str(CI) + '\n') #JP
+
+    print '> selfdrive/controls/controlsd.py controls_thread() call CC = data_send(plan, CS, CI, CP, VM, state, events, actuators, carstate, carcontrol, LaC, LoC, ...) # publish data' #JP
     CC = data_send(plan, plan_ts, CS, CI, CP, VM, state, events, actuators, v_cruise_kph,
                    rk, carstate, carcontrol, live100, livempc, AM, rear_view_allowed,
                    rear_view_toggle, awareness_status, LaC, LoC, angle_offset, passive)
@@ -536,9 +633,21 @@ def controlsd_thread(gctx, rate=100):
     rk.keep_time()
 
     prof.display()
+    print '> selfdrive/controls/controlsd.py controls_thread() END' #JP
 
 
 def main(gctx=None):
+  global timeSignature, year, day, hour, minute #JP
+  year = str(time.localtime().tm_year) #JP
+  month = str(time.localtime().tm_mon) #JP
+  day = str(time.localtime().tm_mday) #JP
+  hour = str(time.localtime().tm_hour) #JP
+  minute = str(time.localtime().tm_min) #JP
+  timeSignature = year + ' ' + month + ' ' + day + ' ' + hour + ' ' + minute #JP
+
+  print '\n' #JP
+  print timeSignature + ' selfdrive/controls/controlsd.py main()' #JP
+
   controlsd_thread(gctx, 100)
 
 if __name__ == "__main__":

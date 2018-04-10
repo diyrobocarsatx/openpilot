@@ -87,6 +87,9 @@ def can_recv():
       break
     except (USBErrorIO, USBErrorOverflow):
       cloudlog.exception("CAN: BAD RECV, RETRYING")
+  cloudlog.info('*** selfdrive-boardd-boardd.py-can_recv') #JP
+  cloudlog.info('*** dat = ' + str(dat)) #JP
+  cloudlog.info('*** parse can buffer of dat = ' + str(__parse_can_buffer(dat))) #JP
   return __parse_can_buffer(dat)
 
 def can_init():
@@ -129,6 +132,7 @@ def boardd_mock_loop():
 
     # recv @ 100hz
     can_msgs = can_recv()
+    cloudlog.info('boardd.py can_msgs = ' + str(can_msgs)) #JP
     print "sent %d got %d" % (len(snd), len(can_msgs))
     m = can_list_to_can_capnp(can_msgs)
     sendcan.send(m.to_bytes())
@@ -148,6 +152,7 @@ def boardd_test_loop():
 
 # *** main loop ***
 def boardd_loop(rate=200):
+  print 'selfdrive/boardd/boardd.py board_loop()\n' #JP
   rk = Ratekeeper(rate)
   context = zmq.Context()
 
@@ -176,6 +181,7 @@ def boardd_loop(rate=200):
 
     # recv @ 100hz
     can_msgs = can_recv()
+    print '   boardd.py board_loop(): while 1 loop can_msgs = ', can_msgs #JP
 
     # publish to logger
     # TODO: refactor for speed
@@ -185,6 +191,7 @@ def boardd_loop(rate=200):
 
     # send can if we have a packet
     tsc = messaging.recv_sock(sendcan)
+    print 'boardd.py tsc = ', tsc, '\n' #JP
     if tsc is not None:
       can_send_many(can_capnp_to_can_list(tsc.sendcan))
 
@@ -205,6 +212,7 @@ def boardd_proxy_loop(rate=200, address="192.168.2.251"):
   while 1:
     # recv @ 100hz
     can_msgs = can_recv()
+    cloudlog.info('can_msgs =' + str(can_msgs) + '\n') #JP
     #for m in can_msgs:
     #  print "R:",hex(m[0]), str(m[2]).encode("hex")
 
@@ -216,6 +224,7 @@ def boardd_proxy_loop(rate=200, address="192.168.2.251"):
 
     # send can if we have a packet
     tsc = messaging.recv_sock(logcan)
+    cloudlog.info('boardd.py tsc = ' + str(tsc)) #JP
     if tsc is not None:
       cl = can_capnp_to_can_list(tsc.can)
       #for m in cl:
@@ -225,6 +234,7 @@ def boardd_proxy_loop(rate=200, address="192.168.2.251"):
     rk.keep_time()
 
 def main(gctx=None):
+  print 'selfdrive/boardd/boardd.py main()' #JP
   if os.getenv("MOCK") is not None:
     boardd_mock_loop()
   elif os.getenv("PROXY") is not None:

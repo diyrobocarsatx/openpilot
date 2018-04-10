@@ -78,6 +78,7 @@ class LongControl(object):
 
   def update(self, active, v_ego, brake_pressed, standstill, cruise_standstill, v_cruise, v_target, v_target_future, a_target, CP, lead_1):
     # actuation limits
+    print '> selfdrive/controls/lib/longcontrol.py LongControl(object).update(CP)' #JP
     gas_max = interp(v_ego, CP.gasMaxBP, CP.gasMaxV)
     brake_max = interp(v_ego, CP.brakeMaxBP, CP.brakeMaxV)
 

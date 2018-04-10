@@ -6,36 +6,61 @@ from selfdrive.can.libdbc_py import libdbc, ffi
 
 class CANParser(object):
   def __init__(self, dbc_name, signals, checks=[], bus=0, sendcan=False):
+    print '> selfdrive/can/parser.py CANParser(object).__init__(dbc_name, signals, checks)' #JP
+    print '   dbc_name = ', dbc_name #JP
+    #print '   signals = \n', signals #JP
+    print '   signals = ...' #JP
+    #print '   checks = \n', checks #JP
+    print '   checks = ...' #JP
+    
     self.can_valid = True
     self.vl = defaultdict(dict)
     self.ts = defaultdict(dict)
 
+    print '   > selfdrive/can/parser.py CANParser(object).__init__() call libdbc.dbc_lookup(dbc_name)' #JP
     self.dbc = libdbc.dbc_lookup(dbc_name)
+    print '   dbc = ', str(self.dbc) #JP
     self.msg_name_to_addres = {}
     self.address_to_msg_name = {}
 
     num_msgs = self.dbc[0].num_msgs
+    print '   num_msgs = ', num_msgs #JP
     for i in range(num_msgs):
       msg = self.dbc[0].msgs[i]
 
       name = ffi.string(msg.name)
       address = msg.address
+      print '   message Id = ', address, '   message name = ', name #JP
+      print '      msg = ', msg #JP
 
       self.msg_name_to_addres[name] = address
       self.address_to_msg_name[address] = name
+      #print 'self.msg_name_to_address[',name,'] = ', address #JP
+      
+    print 'name to address dictionary' #JP
+    #print '   ', self.msg_name_to_addres, '\n' #JP
+    print 'address to name dictionary' #JP
+    #print '   ', self.address_to_msg_name, '\n' #JP
 
     # Convert message names into adresses
+    print '   Convert message names into addresses' #JP
     for i in range(len(signals)):
       s = signals[i]
+      #print '   s = ', s #JP
+      #print '   s[0] = ', s[0] #JP
+      #print '   s[1] = ', s[1] #JP
+      #print '   s[2] = ', s[2] #JP
       if not isinstance(s[1], numbers.Number):
         s = (s[0], self.msg_name_to_addres[s[1]], s[2])
         signals[i] = s
+        #print 'signals[',i,'] = ', s #JP
 
     for i in range(len(checks)):
       c = checks[i]
       if not isinstance(c[0], numbers.Number):
         c = (self.msg_name_to_addres[c[0]], c[1])
         checks[i] = c
+    #print '> selfdrive/can/parser.py CANParser(object).__init__() checks = ', checks #JP
 
     sig_names = dict((name, ffi.new("char[]", name)) for name, _, _ in signals)
 
@@ -51,6 +76,7 @@ class CANParser(object):
       } for sig_name, sig_address, sig_default in signals])
 
     message_options = dict((address, 0) for _, address, _ in signals)
+    #print '> selfdrive/can/parser.py CANParser(object).__init__() message_options before checks =',message_options #JP
     message_options.update(dict(checks))
 
     message_options_c = ffi.new("MessageParseOptions[]", [
@@ -58,14 +84,16 @@ class CANParser(object):
         'address': msg_address,
         'check_frequency': freq,
       } for msg_address, freq in message_options.iteritems()])
+    #print '> selfdrive/can/parser.py CANParser(object).__init__() message_options_c = ', message_options_c #JP
 
     self.can = libdbc.can_init(bus, dbc_name, len(message_options_c), message_options_c,
                                len(signal_options_c), signal_options_c, sendcan)
-
+    print '   > selfdrive/can/parser.py CANParser(object).__init__() self.can = ', self.can #JP
     self.p_can_valid = ffi.new("bool*")
 
     value_count = libdbc.can_query(self.can, 0, self.p_can_valid, 0, ffi.NULL)
     self.can_values = ffi.new("SignalValue[%d]" % value_count)
+    print '   > selfdrive/can/parser.py CANParser(object).__init__() call self.update_vl()' #JP
     self.update_vl(0)
     # print "==="
 
@@ -90,10 +118,13 @@ class CANParser(object):
       self.vl[sig_name][name] = cv.value
       self.ts[sig_name][name] = cv.ts
       ret.add(address)
+    print '> selfdrive/can/parser.py CANParser(object).update_vl() ret = ', ret #JP  
     return ret
 
   def update(self, sec, wait):
+    print '> selfdrive/can/parser.py CANParser(object).update() call libdbc.can_update(self.can)' #JP  
     libdbc.can_update(self.can, sec, wait)
+    print '> selfdrive/can/parser.py CANParser(object).update() return self.update_vl()' #JP  
     return self.update_vl(sec)
 
 if __name__ == "__main__":

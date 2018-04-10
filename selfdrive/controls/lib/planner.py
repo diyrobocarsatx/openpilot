@@ -255,6 +255,7 @@ class LongitudinalMpc(object):
 
 class Planner(object):
   def __init__(self, CP, fcw_enabled):
+    print '> selfdrive/controls/lib/planner.py Planner(object).__init__()' #JP
     context = zmq.Context()
     self.CP = CP
     self.poller = zmq.Poller()
@@ -277,6 +278,7 @@ class Planner(object):
     self.radar_dead = True
     self.radar_errors = []
 
+    print '> selfdrive/controls/lib/planner.py Planner(object).__init__() call self.PP = PathPlanner()' #JP
     self.PP = PathPlanner()
     self.mpc1 = LongitudinalMpc(1, self.live_longitudinal_mpc)
     self.mpc2 = LongitudinalMpc(2, self.live_longitudinal_mpc)
@@ -489,4 +491,5 @@ class Planner(object):
     plan_send.plan.fcw = fcw
 
     self.plan.send(plan_send.to_bytes())
+    print '       > selfdrive/controls/lib/planner.py choose_solution() returns plan_send' #JP
     return plan_send

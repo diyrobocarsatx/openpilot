@@ -24,6 +24,8 @@ def sub_sock(context, port, poller=None, addr="127.0.0.1", conflate=False):
   return sock
 
 def drain_sock(sock, wait_for_one=False):
+  # print 'selfdrive/messaging.py drain_sock()' #JP
+  # print '  wait_for_one = ', wait_for_one #JP
   ret = []
   while 1:
     try:
@@ -35,11 +37,13 @@ def drain_sock(sock, wait_for_one=False):
       ret.append(dat)
     except zmq.error.Again:
       break
+  print '    > selfdrive/messaging.py drain_sock() returns ret = ',ret    
   return ret
 
 
 # TODO: print when we drop packets?
 def recv_sock(sock, wait=False):
+  print '  > selfdrive/messaging.py recv_sock() sock = ',sock.getsockopt(zmq.FD), 'return dat' #JP
   dat = None
   while 1:
     try:
@@ -51,6 +55,9 @@ def recv_sock(sock, wait=False):
       break
   if dat is not None:
     dat = log.Event.from_bytes(dat)
+  #print '  selfdrive/messaging.py recv_sock()' #JP
+  #print '     dat = ', dat #JP
+  #print '     > return dat' #JP
   return dat
 
 def recv_one(sock):

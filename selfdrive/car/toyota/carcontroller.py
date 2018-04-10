@@ -59,6 +59,7 @@ def process_hud_alert(hud_alert, audible_alert):
 
 class CarController(object):
   def __init__(self, car_fingerprint, enable_camera, enable_dsu, enable_apg):
+    print 'selfdrive/car/toyota/carcontroller.py CarController(object).__init__(car_fingerprint, enable_camera, enable_dsu, enable_apg)' #JP
     self.braking = False
     # redundant safety check with the board
     self.controls_allowed = True
@@ -76,6 +77,7 @@ class CarController(object):
 
   def update(self, sendcan, enabled, CS, frame, actuators,
              pcm_cancel_cmd, hud_alert, audible_alert):
+    print 'selfdrive/car/toyota/carcontroller.py CarController(object).update(sendcan, enabled, CS, actuators, ...)' #JP
 
     # *** compute control surfaces ***
 
