@@ -1,0 +1,581 @@
+******************************************************
+******** START ***************************************
+******************************************************
+
+2018 4 16 12 55  main() selfdrive/manager.py 
+
+> call params = Params() selfdrive/manager.py main() 
+  > Params(object).__init__() START
+     openpilot/common/params.py
+> call params.manager_start() selfdrive/manager.py main() 
+  > manager_start() openpilot/common/params.py
+    > call self._clear_keys_with_type()
+  > Params.put() openpilot/common/params.py
+    set Passive
+> main() try: call manager_update() selfdrive/manager.py 
+> main() try: call manager_init() selfdrive/manager.py 
+  > Params(object).__init__() START
+     openpilot/common/params.py
+  > Params.put() openpilot/common/params.py
+    set Version
+dinfo 1920x1080
+  > Params.put() openpilot/common/params.py
+    set GitCommit
+egl version 1.4
+egl w 1920 h 1080
+gl version OpenGL ES 3.2 V@145.0 (GIT@I0ac3940325)
+  > Params.put() openpilot/common/params.py
+    set GitBranch
+  > Params.put() openpilot/common/params.py
+    set GitRemote
+fatal: bad revision 'origin/release2'
+dirty is 1
+> main() try: call manager_prepare() selfdrive/manager.py 
+  > manager_prepare() START selfdrive/manager.py 
+
+    # build cereal first (openpilot comment)
+make: Nothing to be done for 'all'.
+  > build all processes selfdrive/manager.py manager_prepare() 
+   > call prepare_managed_process(p) pandad
+       > prepare_managed_process(p)
+preimporting selfdrive.pandad
+
+   > call prepare_managed_process(p) visiond
+       > prepare_managed_process(p)
+        building ('selfdrive/visiond', ['./visiond'])
+
+visiond: this is a release
+   > call prepare_managed_process(p) sensord
+       > prepare_managed_process(p)
+        building ('selfdrive/sensord', ['./sensord'])
+
+sensord: this is a release
+   > call prepare_managed_process(p) boardd
+       > prepare_managed_process(p)
+        building ('selfdrive/boardd', ['./boardd'])
+
+make: Nothing to be done for 'all'.
+   > call prepare_managed_process(p) ui
+       > prepare_managed_process(p)
+        building ('selfdrive/ui', ['./ui'])
+
+make: Nothing to be done for 'all'.
+   > call prepare_managed_process(p) controlsd
+       > prepare_managed_process(p)
+preimporting selfdrive.controls.controlsd
+
+make: Nothing to be done for 'all'.
+make: Nothing to be done for 'all'.
+  > CarInterface(object)__init__(CP) END selfdrive/car/toyota/interface.py
+make: Nothing to be done for 'all'.
+> [controlsd.py] State = log.Live100Data.ControlState =  <capnp.lib.capnp._EnumModule object at 0x7f822965d0>
+  >
+ manager_prepare() END selfdrive/manager.py
+
+> main() try: call manager_thread() selfdrive/manager.py 
+
+  > ***** manager_thread() START selfdrive/manager.py *****
+
+    > call loop start_managed_processes() for persistent processes selfdrive/manager.py manager_thread() 
+       > [start_managed_process(name)] name =  logmessaged
+       > [start_managed_process()]  logmessaged is already running or is not a managed process
+       > [start_managed_process(name)] name =  logcatd
+       > [start_managed_process()]  logcatd is already running or is not a managed process
+       > [start_managed_process(name)] name =  tombstoned
+       > [start_managed_process()]  tombstoned is already running or is not a managed process
+       > [start_managed_process(name)] name =  uploader
+       > [start_managed_process()]  uploader is already running or is not a managed process
+       > [start_managed_process(name)] name =  ui
+starting process ui
+
+       > [start_managed_process(name)] name =  gpsd
+       > [start_managed_process()]  gpsd is already running or is not a managed process
+       > [start_managed_process(name)] name =  updated
+       > [start_managed_process()]  updated is already running or is not a managed process
+dinfo 1920x1080
+egl version 1.4
+egl w 1920 h 1080
+gl version OpenGL ES 3.2 V@145.0 (GIT@I0ac3940325)
+dinfo 1920x1080
+egl version 1.4
+egl w 1920 h 1080
+gl version OpenGL ES 3.2 V@145.0 (GIT@I0ac3940325)
+       > [start_managed_process(name)] name =  pandad
+starting python selfdrive.pandad
+
+    > call params = Params() selfdrive/manager.py manager_thread()
+  > Params(object).__init__() START
+     openpilot/common/params.py
+      > [manager_thread()] params =  <common.params.Params object at 0x7f80be7a90>
+
+    > manager_thread() while 1 loop START selfdrive/manager.py
+      > manager_thread() while 1 loop call td = messaging.recv_sock(health_sock, wait=True) selfdrive/manager.py 
+  > selfdrive/messaging.py recv_sock() sock =  17 return dat
+opening device none 0xddcc
+connected
+v1.0.7-unknown-DEBUG should be v1.0.7
+boardd.cc: starting boardd
+boardd.cc: waiting for params to set safety model
+boardd.cc: connected to board
+boardd.cc: got 352 bytes CarParams
+boardd.cc: setting safety model: 2 with param 66
+      > manager_thread() while 1 loop call location = messaging.recv_sock(location_sock) selfdrive/manager.py 
+  > selfdrive/messaging.py recv_sock() sock =  18 return dat
+      > manager_thread() while 1 loop call thermal_sock.send() selfdrive/manager.py 
+      > manager_thread() while 1 loop msg = ... selfdrive/manager.py 
+       > [start_managed_process(name)] name =  uploader
+       > [start_managed_process()]  uploader is already running or is not a managed process
+  > [manager_thread()] while 1 loop should_start =  True
+  > [while 1 loop, if should_start] call params.car_start() selfdrive/manager.py manager_thread()
+     > car_start() openpilot/common/params.py
+       > calls self._clear_keys_with_type()
+  > [while 1 loop] call start_managed_process(p)  controlsd
+       > [start_managed_process(name)] name =  controlsd
+starting python selfdrive.controls.controlsd
+
+  > [while 1 loop] call start_managed_process(p)  loggerd
+       > [start_managed_process(name)] name =  loggerd
+       > [start_managed_process()]  loggerd is already running or is not a managed process
+  > [while 1 loop] call start_managed_process(p)  sensord
+       > [start_managed_process(name)] name =  sensord
+starting process sensord
+
+  > [while 1 loop] call start_managed_process(p)  radard
+       > [start_managed_process(name)] name =  radard
+       > [start_managed_process()]  radard is already running or is not a managed process
+  > [while 1 loop] call start_managed_process(p)  visiond
+       > [start_managed_process(name)] name =  visiond
+starting process visiond
+
+  > [while 1 loop] call start_managed_process(p)  proclogd
+       > [start_managed_process(name)] name =  proclogd
+       > [start_managed_process()]  proclogd is already running or is not a managed process
+> [manager_thread()] while 1 loop END selfdrive/manager.py
+
+
+    > manager_thread() while 1 loop START selfdrive/manager.py
+      > manager_thread() while 1 loop call td = messaging.recv_sock(health_sock, wait=True) selfdrive/manager.py 
+  > selfdrive/messaging.py recv_sock() sock =  17 return dat
+
+
+2018 4 16 12 55 selfdrive/controls/controlsd.py main()
+***** > controls_thread() START ***** selfdrive/controls/controlsd.py
+
+pid 3818's current scheduling policy: SCHED_OTHER
+pid 3818's current scheduling priority: 0
+pid 3818's new scheduling policy: SCHED_FIFO
+pid 3818's new scheduling priority: 3
+> call params = Params() controls_thread()
+  > Params(object).__init__() START
+     openpilot/common/params.py
+> [controls_thread()] passive = params.get("Passive") != 0 False 
+
+> [controls_thread()] sendcan =  <zmq.sugar.socket.Socket object at 0x7f80bde8d8>
+> [controls_thread()] create logcan subscription socket on can port controlsd.py 
+> [controls_thread()] type(logcan) =  <class 'zmq.sugar.socket.Socket'>
+> [controls_thread()] CC = car.CarControl.new_message()
+> call get_car(logcan, sendcan) returns CI, CP -- CI is Class Interface and CP is Car Parameters controls_thread()
+
+  > get_car(logcan) return interface_cls(params, sendcan), params selfdrive/car/__init__.py
+
+  > call candidate, fingerprint = fingerprint(logcan, timeout) selfdrive/car/__init__.py get_car(logcan)
+> [get_car()] timeout =  None
+> [get_car()] passive =  None
+  > fingerprint(logcan, timeout) return candidate_cars[0], finger selfdrive/car/__init__.py
+  > call candidate_cars = all_known_cars() selfdrive/car/__init__.py fingerprint()
+
+> all_known_cars() openpilot/common/fingerprints.py
+  > # Returns a list of all known car strings (openpilot comment) all_known_cars()
+  > [fingerprints.py all_known_cars()] _Fingerprints.keys() =  ['TOYOTA PRIUS 2017', 'LEXUS RX HYBRID 2017', 'TOYOTA COROLLA 2017', 'TOYOTA RAV4 2017', 'ACURA ILX 2016 ACURAWATCH PLUS', 'HONDA PILOT 2017 TOURING', 'HONDA CIVIC 2016 TOURING', 'HONDA CR-V 2016 TOURING', 'ACURA RDX 2018 ACURAWATCH PLUS', 'TOYOTA RAV4 2017 HYBRID', 'HONDA ODYSSEY 2018 EX-L'] 
+
+vendor: 'QUALCOMM'
+platform version: 'OpenCL 2.0 QUALCOMM build: commit #6ff34ae changeid #I0ac3940325 Date: 09/23/16 Fri Local Branch:  Remote Branch: refs/tags/AU_LINUX_ANDROID_LA.HB.1.3.2.06.00.01.214.261'
+profile: 'FULL_PROFILE'
+extensions: ' '
+name: 'QUALCOMM Adreno(TM)'
+device version: 'OpenCL 2.0 Adreno(TM) 530'
+type = 0x0004 = CL_DEVICE_TYPE_GPU
+
+   waiting for fingerprint...
+
+    > [car/__init__.py fingerprint()] st =  None
+    > call messaging.drain_sock(logcan, ...) selfdrive/car/__init__.py fingerprint()
+      > selfdrive/messaging.py drain_sock(sock)
+      > selfdrive/messaging.py drain_sock(sock) wait_for_one =  False
+      > selfdrive/messaging.py drain_sock() call dat = sock.recv(zmq.NOBLOCK)
+      > selfdrive/messaging.py drain_sock() returns ret =  []
+     > [fingerprint()] ts =  402.918914063
+     > [fingerprint()] len(candidate_cars) =  11
+     > [fingerprint()] st =  402.918895417
+     > [fingerprint()] timeout =  None
+     > [fingerprint()] finger_st =  402.914556563
+     > [fingerprint()] (timeout and ts-finger_st > timeout) =  None
+    > fingerprint() while 1 loop END selfdrive/car/__init__.py
+
+ > ***  [car/__init__.py fingerprint()] fingerprinted =  TOYOTA PRIUS 2017
+ > ***  [car/__init__.py fingerprint()] finger =  {} 
+
+ > car/__init__.py fingerprint() END
+
+  > car/__init__.py get_car() candidate =  TOYOTA PRIUS 2017
+  > car/__init__.py get_car() interface_cls =  <class 'selfdrive.car.toyota.interface.CarInterface'>
+  > car/__init__.py get_car() fingerprints =  {}
+  > call params = interface_cls.get_params(candidate, fingerprints) car/__init__.py get_car() 
+
+> CarInterface.get_params(candidate, fingerprint) START selfdrive/car/toyota interface.py
+  > ret = car.CarParams.new_message() CarInterface.get_params()
+  > call ret.enableCamera = not check_ecu_msgs(fingerprint, candidate, ECU.CAM) selfdrive/car/toyota/interface.py CarInterface.get_params()
+> selfdrive/car/toyota/values.py check_ecu_msgs(fingerprint, candidate, ecu)
+  > # return True if fingerprint contains messages normally sent by a given ecu (openpilot comment)
+  > call ret.enableCamera = not check_ecu_msgs(fingerprint, candidate, ECU.DSU) selfdrive/car/toyota/interface.py CarInterface.get_params()
+> selfdrive/car/toyota/values.py check_ecu_msgs(fingerprint, candidate, ecu)
+  > # return True if fingerprint contains messages normally sent by a given ecu (openpilot comment)
+ECU Camera Simulated:  True
+ECU DSU Simulated:  True
+ECU APGS Simulated:  False
+> CarInterface.get_params() END selfdrive/car/toyota/interface.py
+
+> call interface_class(params, sendcan) selfdrive/car/__init__.py get_car()
+> CarInterface(object).__init__(CP) START selfdrive/car/toyota/interface.py
+> call VehicleModel(CP) selfdrive/car/toyota/interface.py CarInterface(object).__init__(CP)
+> VehicleModel(object).__init__(CP) START selfdrive/controls/lib/vehicle_model.py
+> *** init the major players *** (openpilot comment) CarInterface()
+  > call self.CS = CarState(CP) selfdrive/car/toyota/interface.py CarInterface(object).__init__(CP)
+> CarState(object).__init__(CP) START selfdrive/car/toyota/carstate.py
+   > [CarState(object).__init__()] type(self.CP) =  <type 'capnp.lib.capnp._DynamicStructBuilder'>
+   > [CarState(object).__init__()] self.CP =  ( carName = "toyota",
+  carFingerprint = "TOYOTA PRIUS 2017",
+  enableSteer = true,
+  enableGas = true,
+  enableBrake = true,
+  enableCruise = true,
+  mass = 1516.9524,
+  wheelbase = 2.7,
+  centerToFront = 1.188,
+  steerRatio = 14.5,
+  steerRatioRear = 0,
+  rotationalInertia = 2594.636,
+  tireStiffnessFront = 82723.914,
+  tireStiffnessRear = 102747.58,
+  steerKp = 0.6,
+  steerKi = 0.05,
+  minEnableSpeed = -1,
+  safetyModel = 2,
+  steerMaxBP = [4.4444447, 12.5],
+  steerMaxV = [1, 1],
+  gasMaxBP = [0],
+  gasMaxV = [0.5],
+  brakeMaxBP = [5, 20],
+  brakeMaxV = [1, 0.8],
+  steerKf = 6e-05,
+  enableCamera = true,
+  enableDsu = true,
+  enableApgs = false,
+  steerLimitAlert = false,
+  vEgoStopping = 0,
+  directAccelControl = false,
+  longPidDeadzoneBP = [0, 9],
+  longPidDeadzoneV = [0, 0.15],
+  stoppingControl = false,
+  startAccel = 0,
+  longitudinalKpBP = [0, 5, 35],
+  longitudinalKpV = [3.6, 2.4, 1.5],
+  longitudinalKiBP = [0, 35],
+  longitudinalKiV = [0.54, 0.36],
+  steerRateCost = 2,
+  safetyParam = 66 )
+   # initialize can parser (openpilot comment) [CarState(object).__init__()]
+   > [CarState(object).__init__()] self.car_fingerprint =  TOYOTA PRIUS 2017
+  > call self.cp = get_can_parser(CP) selfdrive/car/toyota/interface.py CarInterface(object)__init__(CP)
+    > get_can_parser(CP) return CANParser object selfdrive/car/toyota/carstate.py
+      > # this function generates lists for signal, messages and initial values (openpilot comment) carstate.py get_can_parser()
+    > call CANParser(dbc_f, signals, checks) selfdrive/car/toyota/carstate.py get_can_parser()
+> CANParser(object).__init__(dbc_name, signals, checks) selfdrive/can/parser.py
+   dbc_name =  toyota_prius_2017_pt_generated
+   signals = ...
+   checks = ...
+   > call libdbc.dbc_lookup(dbc_name) selfdrive/can/parser.py CANParser(object).__init__()
+   > [CANParser(object).__init__()] dbc =  <cdata 'DBC *' 0x7f809630a8>
+   > [CANParser(object).__init__()] num_msgs =  26
+   > message Id =  36    message name =  KINEMATICS
+      > msg =  <cdata 'Msg &' 0x7f809630c0>
+   > message Id =  37    message name =  STEER_ANGLE_SENSOR
+      > msg =  <cdata 'Msg &' 0x7f809630e0>
+   > message Id =  166    message name =  BRAKE
+      > msg =  <cdata 'Msg &' 0x7f80963100>
+   > message Id =  170    message name =  WHEEL_SPEEDS
+      > msg =  <cdata 'Msg &' 0x7f80963120>
+   > message Id =  180    message name =  SPEED
+      > msg =  <cdata 'Msg &' 0x7f80963140>
+   > message Id =  295    message name =  GEAR_PACKET
+      > msg =  <cdata 'Msg &' 0x7f80963160>
+   > message Id =  466    message name =  PCM_CRUISE
+      > msg =  <cdata 'Msg &' 0x7f80963180>
+   > message Id =  467    message name =  PCM_CRUISE_2
+      > msg =  <cdata 'Msg &' 0x7f809631a0>
+   > message Id =  550    message name =  BRAKE_MODULE
+      > msg =  <cdata 'Msg &' 0x7f809631c0>
+   > message Id =  552    message name =  ACCELEROMETER
+      > msg =  <cdata 'Msg &' 0x7f809631e0>
+   > message Id =  560    message name =  BRAKE_MODULE2
+      > msg =  <cdata 'Msg &' 0x7f80963200>
+   > message Id =  581    message name =  GAS_PEDAL
+      > msg =  <cdata 'Msg &' 0x7f80963220>
+   > message Id =  608    message name =  STEER_TORQUE_SENSOR
+      > msg =  <cdata 'Msg &' 0x7f80963240>
+   > message Id =  610    message name =  EPS_STATUS
+      > msg =  <cdata 'Msg &' 0x7f80963260>
+   > message Id =  614    message name =  STEERING_IPAS
+      > msg =  <cdata 'Msg &' 0x7f80963280>
+   > message Id =  740    message name =  STEERING_LKA
+      > msg =  <cdata 'Msg &' 0x7f809632a0>
+   > message Id =  742    message name =  LEAD_INFO
+      > msg =  <cdata 'Msg &' 0x7f809632c0>
+   > message Id =  835    message name =  ACC_CONTROL
+      > msg =  <cdata 'Msg &' 0x7f809632e0>
+   > message Id =  921    message name =  PCM_CRUISE_SM
+      > msg =  <cdata 'Msg &' 0x7f80963300>
+   > message Id =  951    message name =  ESP_CONTROL
+      > msg =  <cdata 'Msg &' 0x7f80963320>
+   > message Id =  1041    message name =  ACC_HUD
+      > msg =  <cdata 'Msg &' 0x7f80963340>
+   > message Id =  1042    message name =  LKAS_HUD
+      > msg =  <cdata 'Msg &' 0x7f80963360>
+   > message Id =  1553    message name =  UI_SEETING
+      > msg =  <cdata 'Msg &' 0x7f80963380>
+   > message Id =  1556    message name =  STEERING_LEVERS
+      > msg =  <cdata 'Msg &' 0x7f809633a0>
+   > message Id =  1568    message name =  SEATS_DOORS
+      > msg =  <cdata 'Msg &' 0x7f809633c0>
+   > message Id =  1570    message name =  LIGHT_STALK
+      > msg =  <cdata 'Msg &' 0x7f809633e0>
+> name to address dictionary ... CANParser(object).__init__()
+> address to name dictionary ...  CANParser(object).__init__()
+   # Convert message names into addresses (openpilot comment) CANParser(object).__init__()
+> # set default values by name (openpilot comment) selfdrive/can/parser.py 
+> call self.can = libdbc.can_init(bus, dbc_name, ...) selfdrive/can/parser.py 
+   > [parser.py CANParser(object).__init__()] self.can =  <cdata 'void *' 0x7f80a2e060>
+   > call self.update_vl() selfdrive/can/parser.py CANParser(object).__init__() 
+> CANParser(object).update_vl() return ret parser.py CANParser()
+  > call self.CC = CarController(CP.carFingerprint) selfdrive/car/toyota/interface.py CarInterface(object)__init__(CP)
+  > [CarInterface(object).__init__()] CP.carFingerprint =  TOYOTA PRIUS 2017
+> CarController(object).__init__(car_fingerprint, enable_camera, enable_dsu, enable_apg) START selfdrive/car/toyota/carcontroller.py
+> [CarController(object).__init__()] self.car_fingerprint =  TOYOTA PRIUS 2017
+> call PL = Planner(CP) controls_thread()
+> selfdrive/controls/lib/planner.py Planner(object).__init__()
+> selfdrive/controls/lib/planner.py Planner(object).__init__() call self.PP = PathPlanner()
+> selfdrive/controls/lib/pathplanner.py PathPlanner(object).__init__()
+model: building...
+> call LoC = LongControl(CP, CI.compute_b) controls_thread()
+> call VM = VehicleModel(CP) controls_thread()
+> VehicleModel(object).__init__(CP) START selfdrive/controls/lib/vehicle_model.py
+> call LaC = LatControl(VM) controls_thread()
+> call AM = AlertManager() controls_thread()
+{'event': 'alert_add', 'alert_type': 'startup', 'enabled': False}
+> call params.put(CarParams, CP.to_bytes()) controlsd.py controls_thread()
+  > Params.put() openpilot/common/params.py
+    set CarParams
+model: done
+
+> ***** controls_thread(): while 1 loop START ***** controlsd.py controls_thread()
+   counter =  1
+   # SAMPLE DATA and compute car events LatControl (openpilot comment) controls_thread() while 1 loop
+     > call data_sample(CI, CC, ...) controls_thread() while 1 loop
+        > data_sample(CI, CC) return CS, events selfdrive/controls/controlsd.py
+          > read can and compute car states (openpilot comment) data_sample()
+          > call CS = CI.update(CC) data_sample()
+        > CarInterface(object).update(c) returns car.Carstate selfdrive/car/toyota/interface.py 
+        > call self.cp.update(self.cp) selfdrive/car/toyota/interface.py.update()
+> CANParser().update() return self.update_vl() selfdrive/can/parser.py
+> call libdbc.can_update(self.can, ...) selfdrive/can/parser.py CANParser().update()
+> CANParser(object).update_vl() return ret parser.py CANParser()
+        > call self.CS.update(self.cp) selfdrive/car/toyota/interface.py.update(c)
+          > CarState(object).update(cp) selfdrive/car/toyota/carstate.py
+            > cp =  <selfdrive.can.parser.CANParser object at 0x7f80bf2710>
+            > type(cp)  <class 'selfdrive.can.parser.CANParser'>
+        > create message ret = car.CarState.new_message() interface.update()
+        > events = list(CS.events) data_sample()
+           > [data_sample] CS =  ( vEgo = 0,
+  wheelSpeeds = (fl = 0, fr = 0, rl = 0, rr = 0),
+  gas = 0,
+  gasPressed = false,
+  brake = 0,
+  brakePressed = false,
+  steeringAngle = 0,
+  steeringTorque = 0,
+  steeringPressed = false,
+  cruiseState = (
+    enabled = false,
+    speed = 0,
+    available = false,
+    speedOffset = 0,
+    standstill = false ),
+  buttonEvents = [],
+  canMonoTimes = [],
+  events = [
+    ( name = wrongGear,
+      enable = false,
+      noEntry = true,
+      warning = false,
+      userDisable = false,
+      softDisable = true,
+      immediateDisable = false,
+      preEnable = false,
+      permanent = false ),
+    ( name = doorOpen,
+      enable = false,
+      noEntry = true,
+      warning = false,
+      userDisable = false,
+      softDisable = true,
+      immediateDisable = false,
+      preEnable = false,
+      permanent = false ),
+    ( name = seatbeltNotLatched,
+      enable = false,
+      noEntry = true,
+      warning = false,
+      userDisable = false,
+      softDisable = true,
+      immediateDisable = false,
+      preEnable = false,
+      permanent = false ),
+    ( name = espDisabled,
+      enable = false,
+      noEntry = true,
+      warning = false,
+      userDisable = false,
+      softDisable = true,
+      immediateDisable = false,
+      preEnable = false,
+      permanent = false ),
+    ( name = wrongCarMode,
+      enable = false,
+      noEntry = true,
+      warning = false,
+      userDisable = true,
+      softDisable = false,
+      immediateDisable = false,
+      preEnable = false,
+      permanent = false ),
+    ( name = pcmDisable,
+      enable = false,
+      noEntry = false,
+      warning = false,
+      userDisable = true,
+      softDisable = false,
+      immediateDisable = false,
+      preEnable = false,
+      permanent = false ) ],
+  gearShifter = park,
+  steeringRate = 0,
+  aEgo = 0,
+  vEgoRaw = 0,
+  standstill = true,
+  brakeLights = false,
+  leftBlinker = false,
+  rightBlinker = false,
+  yawRate = 0,
+  genericToggle = false,
+  doorOpen = true,
+  seatbeltUnlatched = true ) selfdrive/controls/controlsd.py data_sample()
+
+> ***** data_sample() END *****
+
+   # DEFINE PLAN (openpilot comment) controls_thread() while 1 loop
+     > call calc_plan(CS, events, PL, LoC, ...) controls_thread() while 1 loop
+       > calc_plan(CS, events) selfdrive/controls/controlsd.py
+         > call plan_packet = PL.update(CS, LoC, ...) controlsd.py calc_plan()
+       > selfdrive/controls/lib/planner.py choose_solution() returns plan_send
+           > ***** calc_plan() END *****
+
+   # UPDATE CONTROL STATE (openpilot comment) controls_thread() while 1 loop
+    > call state_transition(CS, CP, state, events, ...) controls_thread() while 1 loop
+     > state_transition(CS, CP, state, events, ...) selfdrive/controls/controlsd.py
+       > [state_transition()] call enabled = isEnabled(state) =  False
+
+   # COMPUTE ACTUATORS (openpilot comment) controls_thread() while 1 loop
+     > call state_control(plan, CS, CP, state, events, ...) controls_thread() while 1 loop
+       > state_control(plan, CS, CP, state, events) return actuators, ... selfdrive/controls/controlsd.py
+       > # Given the state, this functions returns the actuators (openpilot comment) controlds.py state_control()
+      > actuators = (gas = 0, brake = 0, steer = 0)  state_control()
+      > [state_control()] call enabled = isEnabled(state) =  False
+      > [state_control()] call active = isActive(state) =  False
+
+      # *** gas/brake PID loop (openpilot comment) state_control()
+          > call actuators.gas, actuators.break = LoC.update (active, CS.vEgo, ...) controlsd.py state_control()
+> selfdrive/controls/lib/longcontrol.py LongControl(object).update(CP)
+            > actuators.gas =  0.0 state_control()
+            > actuators.brake =  -0.0 state_control()
+              > type(actuators.brake) =  <type 'float'>
+
+      # *** steering PID loop (openpilot comment) state_control()
+          > call actuators.steer = LaC.update (active, CS.vEgo, ...) controlsd.py state_control()
+         > selfdrive/controls/lib/latcontrol.py LatControl(object).update()
+            > actuators.steer =  0.0 state_control()
+
+   # PUBLISH DATA (openpilot comment) controls_thread() while 1 loop
+     > call CC = data_send(plan, CS, CI, CP, VM, state, events, actuators, carstate, carcontrol, LaC, LoC, ...) controls_thread() while 1 loop
+       > data_send(plan, CS, CI, CP, VM, state, events, actuators, car control) return CC selfdrive/controls/controlsd.py
+
+       # **** control the car *****  (openpilot comment) data_send()
+           > call CC = car.CarControl.new_message controlsd.py data_send()
+       [data_send() if not passive:] > call CC.enabled = isEnabled(state) =  False
+         > call CC.actuators = actuators data_send()
+
+       # send car controls over can (openpilot comment) with CI.apply(CC) data_send()
+> CarInterface(object).apply(c) START selfdrive/car/toyota/interface.py 
+> call self.CC.update(sendcan, CS, actuators, ...) selfdrive/car/toyota/interface.py CarInterface(object).apply(c) 
+> CarController(object).update(sendcan, enabled, CS, actuators, ...) START selfdrive/car/toyota/carcontroller.py
+> [data_send] call dat.live100.enabled = isEnabled(state)
+> [data_send] call dat.live100.active = isActive(state)
+
+       # car state (openpilot comment) data_send()
+
+       # high level control state (openpilot comment) data_send()
+           > [data_send()] dat.live100.state =  0
+
+       # longitudinal control state (openpilot comment) data_send()
+           > [data_send()] longitudinal control state
+
+       # lateral control state (openpilot comment) data_send()
+
+       # broadcast carState (openpilot comment) data_send()
+
+       # broadcast carControls (openpilot comment) data_send()
+           > call cc_send = messaging.new_message() data_send()
+           > call carcontrol.send(cc_send.to_bybtes()) data_send()
+         > [data_send()] type(CC) =  <type 'capnp.lib.capnp._DynamicStructBuilder'>
+
+      > ***** data_send(): END ***** selfdrive/controls/controlsd.py
+
+> ***** controls_thread() while 1 loop END ***** selfdrive/controls/controlsd.py controls_thread() 
+
+camera_qcom.c: user focus adjust: 0
+      > manager_thread() while 1 loop call location = messaging.recv_sock(location_sock) selfdrive/manager.py 
+  > selfdrive/messaging.py recv_sock() sock =  18 return dat
+      > manager_thread() while 1 loop call thermal_sock.send() selfdrive/manager.py 
+      > manager_thread() while 1 loop msg = ... selfdrive/manager.py 
+       > [start_managed_process(name)] name =  uploader
+       > [start_managed_process()]  uploader is already running or is not a managed process
+  > [manager_thread()] while 1 loop should_start =  True
+  > [while 1 loop] call start_managed_process(p)  controlsd
+       > [start_managed_process(name)] name =  controlsd
+       > [start_managed_process()]  controlsd is already running or is not a managed process
+  > [while 1 loop] call start_managed_process(p)  loggerd
+       > [start_managed_process(name)] name =  loggerd
+       > [start_managed_process()]  loggerd is already running or is not a managed process
+  > [while 1 loop] call start_managed_process(p)  sensord
+       > [start_managed_process(name)] name =  sensord
+       > [start_managed_process()]  sensord is already running or is not a managed process
+  > [while 1 loop] call start_managed_process(p)  radard
+       > [start_managed_process(name)] name =  radard
+       > [start_managed_process()]  radard is already running or is not a managed process
+  > [while 1 loop] call start_managed_process(p)  visiond
+       > [start_managed_process(name)] name =  visiond
+       > [start_managed_process()]  visiond is already running or is not a managed process
+  > [while 1 loop] call start_managed_process(p)  proclogd
+       > [start_managed_process(name)] name =  proclogd
+       > [start_managed_process()]  proclogd is already running or is not a managed process
+> [manager_thread()] while 1 loop END selfdrive/manager.py
+
