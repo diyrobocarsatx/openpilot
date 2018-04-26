@@ -272,7 +272,7 @@ class JSDB(object):
 
 class Params(object):
   def __init__(self, db='/data/params'):
-    print '> openpilot/common/params.py Params(object).__init__()' #JP
+    print '  > Params(object).__init__() START [openpilot/common/params.py]' #JP
     self.env = JSDB(db)
 
   def _clear_keys_with_type(self, tx_type):
@@ -287,13 +287,13 @@ class Params(object):
           txn.delete(key)
 
   def manager_start(self):
-    print '     > openpilot/common/params.py manager_start()' #JP
-    print '        > clear keys' #JP
+    print '  > manager_start() [openpilot/common/params.py]' #JP
+    print '    > call self._clear_keys_with_type()' #JP
     self._clear_keys_with_type(TxType.CLEAR_ON_MANAGER_START)
 
   def car_start(self):
-    print '     openpilot/common/params.py car_start()' #JP
-    print '        > clear keys' #JP
+    print '     > car_start() [openpilot/common/params.py]' #JP
+    print '       > call self._clear_keys_with_type()' #JP
     self._clear_keys_with_type(TxType.CLEAR_ON_CAR_START)
 
   def delete(self, key):
@@ -318,8 +318,9 @@ class Params(object):
       raise UnknownKeyName(key)
 
     with self.env.begin(write=True) as txn:
+      print '  > Params.put() [openpilot/common/params.py]' #JP  
+      print "    set", key
       txn.put(key, dat)
-    print "set", key
 
 if __name__ == "__main__":
   params = Params()

@@ -16,9 +16,9 @@ except ImportError:
 
 class CarInterface(object):
   def __init__(self, CP, sendcan=None):
-    print '> selfdrive/car/toyota/interface.py CarInterface(object).__init__(CP)' #JP
+    print '\n> ***** CarInterface(object).__init__(CP) START *****  [selfdrive/car/toyota/interface.py]' #JP
     self.CP = CP
-    print '> selfdrive/car/toyota/interface.py CarInterface(object).__init__(CP) call VehicleModel(CP)' #JP
+    print '> [CarInterface().__init__()] call VehicleModel(CP)' #JP
     self.VM = VehicleModel(CP)
 
     self.frame = 0
@@ -28,18 +28,20 @@ class CarInterface(object):
     self.cruise_enabled_prev = False
 
     # *** init the major players ***
-    print '> selfdrive/car/toyota/interface.py CarInterface(object).__init__(CP) call self.CS = CarState(CP)' #JP
+    print '> [CarInterface().__init__()] *** init the major players *** (openpilot comment)' #JP
+    print '  > [CarInterface().__init__()] call self.CS = CarState(CP)' #JP
     self.CS = CarState(CP)
 
-    print '  > selfdrive/car/toyota/interface.py CarInterface(object)__init__(CP) call self.cp = get_can_parser(CP)' #JP
+    print '  > [CarInterface().__init__()] call self.cp = get_can_parser(CP)' #JP
     self.cp = get_can_parser(CP)
 
     # sending if read only is False
     if sendcan is not None:
       self.sendcan = sendcan
-      print '  > selfdrive/car/toyota/interface.py CarInterface(object)__init__(CP) call self.CC = CarController(CP)' #JP
+      print '  > [CarInterface().__init__()]  call self.CC = CarController(CP.carFingerprint)' #JP
+      print '  > [CarInterface(object).__init__()] CP.carFingerprint = ', CP.carFingerprint #JP
       self.CC = CarController(CP.carFingerprint, CP.enableCamera, CP.enableDsu, CP.enableApgs)
-  print '  > selfdrive/car/toyota/interface.py CarInterface(object)__init__(CP) END' #JP
+  print '> CarInterface().__init__() END *****' #JP
 
   @staticmethod
   def compute_gb(accel, speed):
@@ -51,10 +53,12 @@ class CarInterface(object):
 
   @staticmethod
   def get_params(candidate, fingerprint):
+    print '\n> [interface.py] CarInterface.get_params(candidate, fingerprint) START *****' #JP
 
     # kg of standard extra cargo to count for drive, gas, etc...
     std_cargo = 136
 
+    print '  > [CarInterface.get_params()] ret = car.CarParams.new_message()' #JP
     ret = car.CarParams.new_message()
 
     ret.carName = "toyota"
@@ -111,6 +115,16 @@ class CarInterface(object):
       ret.steerKf = 0.00006   # full torque for 10 deg at 80mph means 0.00007818594
       ret.steerRateCost = .8
 
+# took the lines below (119-126) from Highlander port by Vanillagorilla
+    elif candidate == CAR.KIA:
+      ret.safetyParam = 100 # see conversion factor for STEER_TORQUE_EPS in dbc file
+      ret.wheelbase = 2.78
+      ret.steerRatio = 16.0 
+      ret.mass = 4244./2.205 + std_cargo  # mean between min and max
+      ret.steerKp, ret.steerKi = 0.6, 0.05
+      ret.steerKf = 0.00006   # full torque for 10 deg at 80mph means 0.00007818594
+      ret.steerRateCost = 1.
+
     ret.centerToFront = ret.wheelbase * 0.44
 
     ret.longPidDeadzoneBP = [0., 9.]
@@ -149,8 +163,12 @@ class CarInterface(object):
     ret.brakeMaxBP = [5., 20.]
     ret.brakeMaxV = [1., 0.8]
 
+    print '  > [CarInterface.get_params()]  call ret.enableCamera = not check_ecu_msgs(fingerprint, candidate, ECU.CAM)' #JP
     ret.enableCamera = not check_ecu_msgs(fingerprint, candidate, ECU.CAM)
+    #ret.enableCamera = True #JP 
+    print '  > [CarInterface.get_params()]  call ret.enableCamera = not check_ecu_msgs(fingerprint, candidate, ECU.DSU)' #JP
     ret.enableDsu = not check_ecu_msgs(fingerprint, candidate, ECU.DSU)
+    #ret.enableDsu = True #JP 
     ret.enableApgs = False # not check_ecu_msgs(fingerprint, candidate, ECU.APGS)
     print "ECU Camera Simulated: ", ret.enableCamera
     print "ECU DSU Simulated: ", ret.enableDsu
@@ -166,19 +184,24 @@ class CarInterface(object):
     ret.longitudinalKiBP = [0., 35.]
     ret.longitudinalKiV = [0.54, 0.36]
 
+    print '> ***** [CarInterface.get_params()] return ret and END ***** selfdrive/car/toyota/interface.py\n' #JP
     return ret
 
   # returns a car.CarState
   def update(self, c):
-    print '        > selfdrive/car/toyota/interface.py CarInterface(object).update(c) returns car.Carstate' #JP
+    print '\n> ***** CarInterface.update(c) START ***** returns car.CarState [selfdrive/car/toyota/interface.py]' #JP
     # ******************* do can recv *******************
     canMonoTimes = []
+
+    print '  > [CarInterface.update()] call self.cp.update()' #JP
     self.cp.update(int(sec_since_boot() * 1e9), False)
 
-    print '        > selfdrive/car/toyota/interface.py.update(c) call self.CS.update(self.cp)' #JP
+    print '  > [CarInterface.update()] call self.CS.update(self.cp)' #JP
     self.CS.update(self.cp)
 
     # create message
+    print '  > [CarInterface.update()] create message (openpilot comment)' #JP
+    print '  > [CarInterface.update()] ret = car.CarState.new_message()' #JP
     ret = car.CarState.new_message()
 
     # speeds
@@ -187,10 +210,14 @@ class CarInterface(object):
     ret.aEgo = self.CS.a_ego
     ret.yawRate = self.VM.yaw_rate(self.CS.angle_steers * CV.DEG_TO_RAD, self.CS.v_ego)
     ret.standstill = self.CS.standstill
-    ret.wheelSpeeds.fl = self.CS.v_wheel_fl
-    ret.wheelSpeeds.fr = self.CS.v_wheel_fr
-    ret.wheelSpeeds.rl = self.CS.v_wheel_rl
-    ret.wheelSpeeds.rr = self.CS.v_wheel_rr
+    #ret.wheelSpeeds.fl = self.CS.v_wheel_fl
+    #ret.wheelSpeeds.fr = self.CS.v_wheel_fr
+    #ret.wheelSpeeds.rl = self.CS.v_wheel_rl
+    #ret.wheelSpeeds.rr = self.CS.v_wheel_rr
+    ret.wheelSpeeds.fl = 70 #JP
+    ret.wheelSpeeds.fr = 70 #JP
+    ret.wheelSpeeds.rl = 70 #JP
+    ret.wheelSpeeds.rr = 70 #JP
 
     # gear shifter
     ret.gearShifter = self.CS.gear_shifter
@@ -301,11 +328,18 @@ class CarInterface(object):
     self.brake_pressed_prev = ret.brakePressed
     self.cruise_enabled_prev = ret.cruiseState.enabled
 
+    print '  > [CarInterface.update()] type(ret)', type(ret) #JP
+    print '  > [CarInterface.update()] ret = ', ret #JP
+    print '  > [CarInterface.update()] return ret.as_reader()' #JP
+    print '  > ***** [CarInterface] update() END *****\n' #JP
     return ret.as_reader()
 
   # pass in a car.CarControl
   # to be called @ 100hz
   def apply(self, c):
+    print '> CarInterface(object).apply(c) START selfdrive/car/toyota/interface.py ' #JP
+    print '> call self.CC.update(sendcan, CS, actuators, ...) selfdrive/car/toyota/interface.py CarInterface(object).apply(c) ' #JP
+
 
     self.CC.update(self.sendcan, c.enabled, self.CS, self.frame,
                    c.actuators, c.cruiseControl.cancel, c.hudControl.visualAlert,

@@ -20,18 +20,18 @@ else:
   SIGNAPK = os.path.join(EXTERNAL_PATH, 'tools/signapk')
 
 APKS = {
-  'com.waze': {
-    'src': 'https://apkcache.s3.amazonaws.com/com.waze_1021278.apk',
-    'src_sha256': 'f00957e93e2389f9e30502ac54994b98ac769314b0963c263d4e8baa625ab0c2',
-    'patch': 'com.waze.apkpatch',
-    'out_sha256': '9ec8b0ea3c78c666342865b1bfb66e368a3f5c911df2ad12835206ec8b19f444'
-  },
-  'com.spotify.music': {
-    'src': 'https://apkcache.s3.amazonaws.com/com.spotify.music_24382006.apk',
-    'src_sha256': '0610fea68ee7ba5f8e4e0732ad429d729dd6cbb8bc21222c4c99db6cb09fbff4',
-    'patch': 'com.spotify.music.apkpatch',
-    'out_sha256': '5a3d6f478c7e40403a98ccc8906d7e0ae12b06543b41f5df52149dd09c647c11'
-  },
+#  'com.waze': {
+#    'src': 'https://apkcache.s3.amazonaws.com/com.waze_1021278.apk',
+#    'src_sha256': 'f00957e93e2389f9e30502ac54994b98ac769314b0963c263d4e8baa625ab0c2',
+#    'patch': 'com.waze.apkpatch',
+#    'out_sha256': '9ec8b0ea3c78c666342865b1bfb66e368a3f5c911df2ad12835206ec8b19f444'
+#  },
+#  'com.spotify.music': {
+#    'src': 'https://apkcache.s3.amazonaws.com/com.spotify.music_24382006.apk',
+#    'src_sha256': '0610fea68ee7ba5f8e4e0732ad429d729dd6cbb8bc21222c4c99db6cb09fbff4',
+#    'patch': 'com.spotify.music.apkpatch',
+#    'out_sha256': '5a3d6f478c7e40403a98ccc8906d7e0ae12b06543b41f5df52149dd09c647c11'
+#  },
 }
 
 def sha256_path(path):

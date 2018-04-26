@@ -75,7 +75,7 @@ EON = os.path.exists("/EON")
 managed_processes = {
 #  "uploader": "selfdrive.loggerd.uploader",
   "controlsd": "selfdrive.controls.controlsd",
-#  "radard": "selfdrive.controls.radard",
+  "radard": "selfdrive.controls.radard",
 #  "loggerd": ("selfdrive/loggerd", ["./loggerd"]),
 #  "logmessaged": "selfdrive.logmessaged",
 #  "tombstoned": "selfdrive.tombstoned",
@@ -87,7 +87,7 @@ managed_processes = {
   "visiond": ("selfdrive/visiond", ["./visiond"]),
   "sensord": ("selfdrive/sensord", ["./sensord"]),
 #  "gpsd": ("selfdrive/sensord", ["./gpsd"]),
-  "updated": "selfdrive.updated",
+#  "updated": "selfdrive.updated",
   #"gpsplanner": "selfdrive.controls.gps_plannerd",
 }
 
@@ -164,24 +164,23 @@ def nativelauncher(pargs, cwd):
   os.execvp(pargs[0], pargs)
 
 def start_managed_process(name):
+  print '       > [start_managed_process(name)] name = ', name #JP
   if name in running or name not in managed_processes:
+    print '       > [start_managed_process()] ', name, 'is already running or is not a managed process' #JP
     return
   proc = managed_processes[name]
   if isinstance(proc, basestring):
-    with open("mgrTT", "a+") as f: #JP
-      f.write('\n starting python %s\n' % proc) #JP
     cloudlog.info("starting python %s\n" % proc)
     running[name] = Process(name=name, target=launcher, args=(proc, gctx))
   else:
     pdir, pargs = proc
     cwd = os.path.join(BASEDIR, pdir)
     cloudlog.info("starting process %s\n" % name)
-    with open("mgrTT", "a+") as f: #JP
-      f.write('\n starting process %s \n' % name) #JP
     running[name] = Process(name=name, target=nativelauncher, args=(pargs, cwd))
   running[name].start()
 
 def prepare_managed_process(p):
+  print '       > prepare_managed_process(p) START [manager.py]' #JP
   proc = managed_processes[p]
   if isinstance(proc, basestring):
     # import this python
@@ -189,7 +188,7 @@ def prepare_managed_process(p):
     importlib.import_module(proc)
   else:
     # build this process
-    cloudlog.info("building %s\n" % (proc,))
+    cloudlog.info("        building %s\n" % (proc,))
     try:
       subprocess.check_call(["make", "-j4"], cwd=os.path.join(BASEDIR, proc[0]))
     except subprocess.CalledProcessError:
@@ -197,6 +196,7 @@ def prepare_managed_process(p):
       cloudlog.warning("building %s failed, make clean" % (proc, ))
       subprocess.check_call(["make", "clean"], cwd=os.path.join(BASEDIR, proc[0]))
       subprocess.check_call(["make", "-j4"], cwd=os.path.join(BASEDIR, proc[0]))
+  print '       > prepare_managed_process(p) END [manager.py]\n' #JP
 
 def kill_managed_process(name):
   if name not in running or name not in managed_processes:
@@ -252,7 +252,7 @@ def manager_init():
     raise Exception("server registration failed")
 
   # set dongle id
-  cloudlog.info("dongle id is " + dongle_id)
+#  cloudlog.info("dongle id is " + dongle_id)
   os.environ['DONGLE_ID'] = dongle_id
 
   if "-private" in subprocess.check_output(["git", "config", "--get", "remote.origin.url"]):
@@ -382,7 +382,7 @@ class LocationStarter(object):
 # ####### MANAGER_THREAD ########
 #################################
 def manager_thread():
-  print '> selfdrive/manager.py manager_thread()\n' #JP
+  print '\n  > ***** manager_thread() START ***** [selfdrive/manager.py]\n' #JP
   # now loop
   context = zmq.Context()
   thermal_sock = messaging.pub_sock(context, service_list['thermal'].port)
@@ -392,7 +392,7 @@ def manager_thread():
 #  cloudlog.info("manager start") #JP commented out
 #  cloudlog.info({"environ": os.environ}) #JP commented out
 
-  print '> selfdrive/manager.py start_managed_processes() for persistent processes' #JP
+  print '    > [manager_thread()] for persistent processes call loop start_managed_processes()' #JP
   for p in persistent_processes:
     start_managed_process(p)
 
@@ -405,11 +405,13 @@ def manager_thread():
   if os.getenv("NOBOARD") is None:
     start_managed_process("pandad")
 
-  print '> selfdrive/manager.py manager_thread() call params = Params()' #JP
+  print '    > [manager_thread()] call params = Params() [selfdrive/manager.py]' #JP
   params = Params()
-  print '> selfdrive/manager.py manager_thread() call params = ', params #JP
+  print '      > [manager_thread()] params = ', params #JP
 
+  print '    > [manager_thread()] call passive = params.get(\'Passive\') == 1 [selfdrive/manager.py]' #JP
   passive = params.get("Passive") == "1"
+  print '      > [manager_thread()] passive = ', passive #JP
   passive_starter = LocationStarter()
 
   started_ts = None
@@ -417,6 +419,7 @@ def manager_thread():
   count = 0
   fan_speed = 0
   ignition_seen = False
+  print '      > [manager_thread()] ignition_seen = ', ignition_seen #JP
   battery_was_high = False
 
   health_sock.RCVTIMEO = 1500
@@ -425,11 +428,11 @@ def manager_thread():
 
   while 1:
     # get health of board, log this in "thermal"
-    print '\n> selfdrive/manager.py manager_thread() while 1 loop' #JP
-    print '> selfdrive/manager.py manager_thread() while 1 loop td = messaging.recv_sock(health_sock, wait=True)' #JP
+    print '\n    > [manager_thread()] ***** while 1 loop START *****' #JP
+    print '      > [manager_thread() while 1 loop] call td = messaging.recv_sock(health_sock, wait=True)' #JP
     td = messaging.recv_sock(health_sock, wait=True)
     #print '   td = ',td #JP
-    print '> selfdrive/manager.py manager_thread() while 1 loop location = messaging.recv_sock(location_sock)' #JP
+    print '      > [manager_thread() while 1 loop] call location = messaging.recv_sock(location_sock)' #JP
     location = messaging.recv_sock(location_sock)
 
     location = location.gpsLocation if location else None
@@ -462,9 +465,9 @@ def manager_thread():
     msg.thermal.started = started_ts is not None
     msg.thermal.startedTs = int(1e9*(started_ts or 0))
 
-    print '> selfdrive/manager.py manager_thread() call thermal_sock.send()' #JP
+    print '      > [manager_thread() while 1 loop] call thermal_sock.send()' #JP
     thermal_sock.send(msg.to_bytes())
-    print '> selfdrive/manager.py manager_thread() msg = ...' #JP
+    print '      > [manager_thread() while 1 loop] msg = ... ' #JP
     #print '   msg = ',msg 
 
     # uploader is gated based on the phone temperature
@@ -485,7 +488,7 @@ def manager_thread():
     accepted_terms = params.get("HasAcceptedTerms") == "1"
 
     should_start = ignition
-    print '> selfdrive/manager.py manager_thread() should_start = ', should_start #JP
+    print '  > [manager_thread() while 1 loop] should_start = ', should_start #JP
 
     # start on gps in passive mode
     if passive and not ignition_seen:
@@ -509,14 +512,14 @@ def manager_thread():
 
     if should_start:
       if not started_ts:
-        print '> selfdrive/manager.py manager_thread(), while 1 loop, if should_start call params.car_start()' #JP
+        print '  > [manager_thread() while 1 loop, if should_start] call params.car_start()' #JP
         params.car_start()
         started_ts = sec_since_boot()
       for p in car_started_processes:
         if p == "loggerd" and logger_dead:
           kill_managed_process(p)
         else:
-          print '> selfdrive/manager.py call start_managed_process() ',p #JP
+          print '  > [manager_thread() while 1 loop] call start_managed_process(p) ',p #JP
           start_managed_process(p)
     else:
       started_ts = None
@@ -548,12 +551,12 @@ def manager_thread():
 
     cloudCount += 1 #JP
     if cloudCount == 5: #JP
-      print '> selfdrive/manager.py manager_thread() looping in while 1, count = ', cloudCount #JP
+      print '  > [manager_thread() while 1 loop] myCount = ', cloudCount #JP
       #cloudCount = 0 #JP
 
     if do_uninstall:
       break
-    print '> selfdrive/manager.py manager_thread() while 1 loop END\n' #JP
+    print '\n     > [manager_thread()] ***** while 1 loop END *****\n' #JP
     count += 1
 
 def get_installed_apks():
@@ -626,17 +629,20 @@ def manager_update():
   pass #JP
 
 def manager_prepare():
-  print '    > selfdrive/manager.py manager_prepare()' #JP
+  print '  > manager_prepare() START [selfdrive/manager.py]\n' #JP
+  print '    # [manager_prepare()] build cereal first (openpilot comment)' #JP
 
   # build cereal first
   subprocess.check_call(["make", "-j4"], cwd=os.path.join(BASEDIR, "cereal"))
 
   # build all processes
   os.chdir(os.path.dirname(os.path.abspath(__file__)))
-  print '    > selfdrive/manager.py manager_prepare() build all processes' #JP
+  print '  > [manager_prepare()] build all processes (openpilot comment)' #JP
   for p in managed_processes:
-    print '     > call prepare_managed_process()', p #JP
+    print '   > [manager_prepare()] call prepare_managed_process(p)', p #JP
     prepare_managed_process(p)
+  
+  print '  >\n manager_prepare() END [selfdrive/manager.py]\n' #JP 
 
 def uninstall():
   cloudlog.warning("uninstalling")
@@ -654,10 +660,10 @@ def main():
   minute = str(time.localtime().tm_min) #JP
   timeSignature = "%s %s %s %s %s " %(year, month, day, hour, minute) #JP
 
-  print '***************************'
-  print '******** START ************' #JP
-  print '***************************\n'
-  print timeSignature + ' selfdrive/manager.py main()\n' #JP
+  print '******************************************************' #JP
+  print '******** START ***************************************' #JP
+  print '******************************************************\n' #JP
+  print timeSignature + ' main() [selfdrive/manager.py] \n' #JP
 
   if os.getenv("NOLOG") is not None:
     del managed_processes['loggerd']
@@ -684,9 +690,9 @@ def main():
   except ImportError:
     pass
 
-  print '> selfdrive/manager.py main() call params = Params()' #JP
+  print '> main() call params = Params() [selfdrive/manager.py]' #JP
   params = Params()
-  print '> selfdrive/manager.py main() call params.manager_start()' #JP
+  print '> main() call params.manager_start() [selfdrive/manager.py]' #JP
   params.manager_start()
 
   # set unset params
@@ -711,11 +717,11 @@ def main():
       cwd=os.path.join(BASEDIR, "selfdrive", "ui", "spinner"),
       close_fds=True)
   try:
-    print '> selfdrive/manager.py main() try: call to manager_update()' #JP
+    print '> main() try: call manager_update() [selfdrive/manager.py]' #JP
     manager_update()
-    print '> selfdrive/manager.py main() try: call to manager_init()' #JP
+    print '> main() try: call manager_init() [selfdrive/manager.py]' #JP
     manager_init()
-    print '> selfdrive/manager.py main() try: call to manager_prepare()' #JP
+    print '> main() try: call manager_prepare() [selfdrive/manager.py]' #JP
     manager_prepare()
   finally:
     if spinner_proc:
@@ -728,7 +734,7 @@ def main():
   signal.signal(signal.SIGTERM, lambda signum, frame: sys.exit(1))
 
   try:
-    print '> selfdrive/manager.py main() try: call to manager_thread()' #JP
+    print '> main() try: call manager_thread() [selfdrive/manager.py]' #JP
     manager_thread()
   except Exception:
     traceback.print_exc()

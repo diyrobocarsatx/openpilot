@@ -2,9 +2,10 @@
 import os
 import sys
 from collections import defaultdict
-from common.realtime import sec_since_boot
+from common.realtime import sec_since_boot #JP 
+#from realtime import sec_since_boot #JP added
 import zmq
-import selfdrive.messaging as messaging
+import selfdrive.messaging as messaging #JP 
 from selfdrive.services import service_list
 
 
@@ -17,7 +18,8 @@ def can_printer(bus=0, max_msg=0x10000, addr="127.0.0.1"):
   msgs = defaultdict(list)
   canbus = int(os.getenv("CAN", bus))
   while 1:
-    can_recv = messaging.drain_sock(logcan, wait_for_one=True)
+    #can_recv = messaging.drain_sock(logcan, wait_for_one=True) #JP commented out
+    can_recv = messaging.drain_sock(logcan, wait_for_one=False) #JP added
     for x in can_recv:
       for y in x.can:
         if y.src == canbus:

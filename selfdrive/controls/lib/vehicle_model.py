@@ -44,7 +44,7 @@ def calc_slip_factor(VM):
 
 class VehicleModel(object):
   def __init__(self, CP, init_state=np.asarray([[0.], [0.]])):
-    print '> selfdrive/controls/lib/vehicle_model.py VehicleModel(object).__init__()'
+    print '> VehicleModel(object).__init__(CP) START selfdrive/controls/lib/vehicle_model.py'
     self.dt = 0.1
     lookahead = 2.    # s
     self.steps = int(lookahead / self.dt)

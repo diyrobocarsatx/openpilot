@@ -59,11 +59,16 @@ def can_health():
   return {"voltage": v, "current": i, "started": bool(started)}
 
 def __parse_can_buffer(dat):
+  print '      > __parse_can_buffer(dat) selfdrive/boardd/boardd.py' #JP
+  print '        > len(dat) = ',len(dat) #JP
   ret = []
   for j in range(0, len(dat), 0x10):
     ddat = dat[j:j+0x10]
     f1, f2 = struct.unpack("II", ddat[0:8])
+    print '> [__parse_can_buffer()] f1 = ', f1 #JP
+    print '> [__parse_can_buffer()] f2 = ', f2 #JP
     ret.append((f1 >> 21, f2>>16, ddat[8:8+(f2&0xF)], (f2>>4)&0xF))
+  print '         > [__parse_can_buffer()] ret = ', ret #JP
   return ret
 
 def can_send_many(arr):
@@ -80,16 +85,18 @@ def can_send_many(arr):
       cloudlog.exception("CAN: BAD SEND MANY, RETRYING")
 
 def can_recv():
+  print '  > can_recv() [selfdrive/boardd/boardd.py]' #JP
   dat = ""
   while 1:
     try:
+      print '    > call dat = handle.bulkRead(...)' #JP
       dat = handle.bulkRead(1, 0x10*256)
       break
     except (USBErrorIO, USBErrorOverflow):
       cloudlog.exception("CAN: BAD RECV, RETRYING")
-  cloudlog.info('*** selfdrive-boardd-boardd.py-can_recv') #JP
-  cloudlog.info('*** dat = ' + str(dat)) #JP
-  cloudlog.info('*** parse can buffer of dat = ' + str(__parse_can_buffer(dat))) #JP
+  print '    > dat = ', dat #JP
+  # myRet = __parse_can_buffer(dat) #JP
+  print '    > call __parse_can_buffer(dat)' #JP
   return __parse_can_buffer(dat)
 
 def can_init():
@@ -100,7 +107,9 @@ def can_init():
   context = usb1.USBContext()
   #context.setDebug(9)
 
+  print 'can_init() list devices loop' #JP
   for device in context.getDeviceList(skip_on_error=True):
+    print '> device = ', device #JP
     if device.getVendorID() == 0xbbaa and device.getProductID() == 0xddcc:
       handle = device.open()
       handle.claimInterface(0)
@@ -111,48 +120,16 @@ def can_init():
     exit(-1)
 
   print "got handle"
+  print "> handle = ", handle #JP
   cloudlog.info("can init done")
 
-def boardd_mock_loop():
-  context = zmq.Context()
-  can_init()
-  handle.controlWrite(0x40, 0xdc, SAFETY_ALLOUTPUT, 0, b'')
+# def boardd_mock_loop(): #JP deleted this whole function
 
-  logcan = messaging.sub_sock(context, service_list['can'].port)
-  sendcan = messaging.pub_sock(context, service_list['sendcan'].port)
-
-  while 1:
-    tsc = messaging.drain_sock(logcan, wait_for_one=True)
-    snds = map(lambda x: can_capnp_to_can_list(x.can), tsc)
-    snd = []
-    for s in snds:
-      snd += s
-    snd = filter(lambda x: x[-1] <= 1, snd)
-    can_send_many(snd)
-
-    # recv @ 100hz
-    can_msgs = can_recv()
-    cloudlog.info('boardd.py can_msgs = ' + str(can_msgs)) #JP
-    print "sent %d got %d" % (len(snd), len(can_msgs))
-    m = can_list_to_can_capnp(can_msgs)
-    sendcan.send(m.to_bytes())
-
-def boardd_test_loop():
-  can_init()
-  cnt = 0
-  while 1:
-    can_send_many([[0xbb,0,"\xaa\xaa\xaa\xaa",0], [0xaa,0,"\xaa\xaa\xaa\xaa"+struct.pack("!I", cnt),1]])
-    #can_send_many([[0xaa,0,"\xaa\xaa\xaa\xaa",0]])
-    #can_send_many([[0xaa,0,"\xaa\xaa\xaa\xaa",1]])
-    # recv @ 100hz
-    can_msgs = can_recv()
-    print "got %d" % (len(can_msgs))
-    time.sleep(0.01)
-    cnt += 1
+# def boardd_test_loop(): #JP deleted this whole function
 
 # *** main loop ***
 def boardd_loop(rate=200):
-  print 'selfdrive/boardd/boardd.py board_loop()\n' #JP
+  print '\n*** selfdrive/boardd/boardd.py board_loop()\n' #JP
   rk = Ratekeeper(rate)
   context = zmq.Context()
 
@@ -165,7 +142,12 @@ def boardd_loop(rate=200):
   # *** subscribes to can send
   sendcan = messaging.sub_sock(context, service_list['sendcan'].port)
 
+  myCount = 0
   while 1:
+    myCount += 1
+    if myCount == 3: break
+    print '   > boardd.py board_loop(): while 1 loop' #JP
+      
     # health packet @ 1hz
     if (rk.frame%rate) == 0:
       health = can_health()
@@ -180,8 +162,9 @@ def boardd_loop(rate=200):
       health_sock.send(msg.to_bytes())
 
     # recv @ 100hz
+    print '     > [while 1 loop] call can_recv()' #JP
     can_msgs = can_recv()
-    print '   boardd.py board_loop(): while 1 loop can_msgs = ', can_msgs #JP
+    print '     > [while 1 loop] can_msgs = ', can_msgs #JP
 
     # publish to logger
     # TODO: refactor for speed
@@ -190,8 +173,17 @@ def boardd_loop(rate=200):
       logcan.send(dat.to_bytes())
 
     # send can if we have a packet
+    print '     > [while 1 loop] call tsc = messaging.recv_sock(sendcan)' #JP
     tsc = messaging.recv_sock(sendcan)
-    print 'boardd.py tsc = ', tsc, '\n' #JP
+    #socket = context.socket(zmq.SUB)
+    #port = '8017'
+    #socket.connect ("tcp://localhost:%s" % port)
+
+    #tsc = socket.recv()
+
+    print '     > [while 1 loop] tsc = ', tsc #JP
+    print '     > [while 1 loop] type(tsc) = ', type(tsc) #JP
+    print '     > [while 1 loop] if tsc is not None call can_send_many(can_capnp_to_can_list(tsc.sendcan))' #JP
     if tsc is not None:
       can_send_many(can_capnp_to_can_list(tsc.sendcan))
 
@@ -224,7 +216,7 @@ def boardd_proxy_loop(rate=200, address="192.168.2.251"):
 
     # send can if we have a packet
     tsc = messaging.recv_sock(logcan)
-    cloudlog.info('boardd.py tsc = ' + str(tsc)) #JP
+    print 'boardd.py tsc = ', tsc #JP
     if tsc is not None:
       cl = can_capnp_to_can_list(tsc.can)
       #for m in cl:
@@ -234,7 +226,10 @@ def boardd_proxy_loop(rate=200, address="192.168.2.251"):
     rk.keep_time()
 
 def main(gctx=None):
-  print 'selfdrive/boardd/boardd.py main()' #JP
+  print '> selfdrive/boardd/boardd.py main()' #JP
+  print '> selfdrive/boardd/boardd.py main() os.getenv("MOCK") = ', os.getenv("MOCK") #JP
+  print '> selfdrive/boardd/boardd.py main() os.getenv("PROXY") = ', os.getenv("PROXY") #JP
+  print '> selfdrive/boardd/boardd.py main() os.getenv("BOARDTEST") = ', os.getenv("PROXY") #JP
   if os.getenv("MOCK") is not None:
     boardd_mock_loop()
   elif os.getenv("PROXY") is not None:

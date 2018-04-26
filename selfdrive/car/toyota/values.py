@@ -7,11 +7,16 @@ class ECU:
 
 
 # addr: (ecu, cars, bus, 1/freq*100, vl)
-STATIC_MSGS = [(0x141, ECU.DSU, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH, CAR.RAV4, CAR.COROLLA), 1,   2, '\x00\x00\x00\x46'),
+#STATIC_MSGS = [(0x141, ECU.DSU, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH, CAR.RAV4, CAR.COROLLA, CAR.KIA), 1,  2, '\x00\x00\x00\x46'), #JP
+STATIC_MSGS = [(0x141, ECU.DSU, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH, CAR.RAV4, CAR.COROLLA), 1,  2, '\x00\x00\x00\x46'), #JP
                (0x128, ECU.DSU, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH, CAR.RAV4, CAR.COROLLA), 1,   3, '\xf4\x01\x90\x83\x00\x37'),
+#               (0x128, ECU.DSU, (CAR.KIA), 1,  3, '\x03\x00\x20\x00\x00\x52'), #JP
 
-               (0x292, ECU.APGS, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH, CAR.RAV4, CAR.COROLLA), 0,   3, '\x00\x00\x00\x00\x00\x00\x00\x9e'),
-               (0x283, ECU.DSU, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH, CAR.RAV4, CAR.COROLLA), 0,   3, '\x00\x00\x00\x00\x00\x00\x8c'),
+#               (0x292, ECU.APGS, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH, CAR.RAV4, CAR.COROLLA, CAR.KIA), 0,   3, '\x00\x00\x00\x00\x00\x00\x00\x9e'), #JP
+               (0x292, ECU.APGS, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH, CAR.RAV4, CAR.COROLLA), 0,   3, '\x00\x00\x00\x00\x00\x00\x00\x9e'), #JP
+#               (0x283, ECU.DSU, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH, CAR.RAV4, CAR.COROLLA, CAR.KIA), 0,   3, '\x00\x00\x00\x00\x00\x00\x8c'), #JP
+               (0x283, ECU.DSU, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH, CAR.RAV4, CAR.COROLLA), 0,   3, '\x00\x00\x00\x00\x00\x00\x8c'), #JP
+#               (0x2E4, ECU.CAM, (CAR.KIA), 0,  3, '\x96\x00\x00\x00\x81'), #JP
                (0x2E6, ECU.DSU, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH), 0,   3, '\xff\xf8\x00\x08\x7f\xe0\x00\x4e'),
                (0x2E7, ECU.DSU, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH), 0,   3, '\xa8\x9c\x31\x9c\x00\x00\x00\x02'),
 
@@ -24,9 +29,14 @@ STATIC_MSGS = [(0x141, ECU.DSU, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH, CAR.RAV4, 
 
                (0x160, ECU.DSU, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH, CAR.RAV4, CAR.COROLLA), 1,   7, '\x00\x00\x08\x12\x01\x31\x9c\x51'),
                (0x161, ECU.DSU, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH, CAR.RAV4, CAR.COROLLA), 1,   7, '\x00\x1e\x00\x00\x00\x80\x07'),
+#               (0X161, ECU.DSU, (CAR.KIA), 1,  7, '\x00\x1e\x00\xd4\x00\x00\x5b'),
 
                (0x32E, ECU.APGS, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH, CAR.RAV4, CAR.COROLLA), 0,  20, '\x00\x00\x00\x00\x00\x00\x00\x00'),
+#               (0x32E, ECU.APGS, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH, CAR.RAV4, CAR.COROLLA, CAR.KIA), 0,  20, '\x00\x00\x00\x00\x00\x00\x00\x00'), #JP
+               (0x32E, ECU.APGS, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH, CAR.RAV4, CAR.COROLLA), 0,  20, '\x00\x00\x00\x00\x00\x00\x00\x00'), #JP
                (0x33E, ECU.DSU, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH), 0,  20, '\x0f\xff\x26\x40\x00\x1f\x00'),
+#               (0x343, ECU.DSU, (CAR.KIA), 0,  20, '\x00\x00\x83\x00\x00\x00\x00\xd1'), #JP
+#               (0x344, ECU.DSU, (CAR.KIA), 0,  20, '\x00\x00\x01\x00\x00\x00\x00\x50'), #JP
                (0x365, ECU.DSU, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH), 0,  20, '\x00\x00\x00\x80\x03\x00\x08'),
                (0x365, ECU.DSU, (CAR.RAV4, CAR.COROLLA), 0,  20, '\x00\x00\x00\x80\xfc\x00\x08'),
                (0x366, ECU.DSU, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH), 0,  20, '\x00\x00\x4d\x82\x40\x02\x00'),
@@ -54,6 +64,8 @@ STATIC_MSGS = [(0x141, ECU.DSU, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH, CAR.RAV4, 
 
 def check_ecu_msgs(fingerprint, candidate, ecu):
   # return True if fingerprint contains messages normally sent by a given ecu
+  print '> selfdrive/car/toyota/values.py check_ecu_msgs(fingerprint, candidate, ecu)' #JP
+  print '  > # return True if fingerprint contains messages normally sent by a given ecu (openpilot comment)' #JP
   ecu_msgs = [x[0] for x in STATIC_MSGS if (x[1] == ecu and
                                             candidate in x[2] and
                                             x[3] == 0)]

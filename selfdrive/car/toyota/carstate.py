@@ -37,8 +37,9 @@ def parse_gear_shifter(can_gear, car_fingerprint):
 
 def get_can_parser(CP):
   # this function generates lists for signal, messages and initial values
-  print '    > selfdrive/car/toyota/carstate.py get_can_parser(CP) return CANParser object' #JP
-  print '      > this function generates lists for signal, messages and initial values' #JP
+  print '\n    > ***** get_can_parser(CP) START ***** return CANParser object [selfdrive/car/toyota/carstate.py]' #JP
+  print '      > # this function generates lists for signal, messages and initial values (openpilot comment) [get_can_parser()]' #JP
+  print '     > [get_can_parser()] declare dbc file dbc_f = ...' #JP
   if CP.carFingerprint == CAR.PRIUS:
     dbc_f = 'toyota_prius_2017_pt_generated.dbc'
   elif CP.carFingerprint == CAR.RAV4H:
@@ -49,7 +50,10 @@ def get_can_parser(CP):
     dbc_f = 'toyota_corolla_2017_pt_generated.dbc'
   elif CP.carFingerprint == CAR.LEXUS_RXH:
     dbc_f = 'lexus_rx_hybrid_2017_pt_generated.dbc'
+  elif CP.carFingerprint == CAR.KIA:
+    dbc_f = 'toyota_kia_soul_2016_can_generated.dbc'
 
+  print '     > [get_can_parser()] declare signals = ...' #JP
   signals = [
     # sig_name, sig_address, default
     ("GEAR", "GEAR_PACKET", 0),
@@ -81,6 +85,7 @@ def get_can_parser(CP):
     ("AUTO_HIGH_BEAM", "LIGHT_STALK", 0),
   ]
 
+  print '     > [get_can_parser()] declare checks = ...' #JP
   checks = [
     ("BRAKE_MODULE", 40),
     ("GAS_PEDAL", 33),
@@ -92,24 +97,24 @@ def get_can_parser(CP):
     ("EPS_STATUS", 25),
   ]
 
-  print '    > selfdrive/car/toyota/carstate.py get_can_parser() call CANParser(dbc_f, signals, checks)' #JP
+  print '     > [get_can_parser()] call CANParser(dbc_f, signals, checks) [selfdrive/car/toyota/carstate.py]' #JP
   return CANParser(os.path.splitext(dbc_f)[0], signals, checks, 0)
 
 
 class CarState(object):
   def __init__(self, CP):
 
-    print '> selfdrive/car/toyota/carstate.py CarState(object).__init__(CP)' #JP
+    print '\n> ***** CarState(object).__init__(CP) START ***** [selfdrive/car/toyota/carstate.py]' #JP
     self.CP = CP
-    print '   > type(self.CP) = ', type(self.CP) #JP
-    print '   > self.CP = ', self.CP #JP
+    print '   > [CarState(object).__init__()] type(self.CP) = ', type(self.CP) #JP
+    print '   > [CarState(object).__init__()] self.CP = ', self.CP #JP
     self.left_blinker_on = 0
     self.right_blinker_on = 0
 
     # initialize can parser
-    print '   > initialize can parser' #JP
+    print '   # initialize can parser (openpilot comment) [CarState(object).__init__()]' #JP
     self.car_fingerprint = CP.carFingerprint
-    print '   > selfdrive/car/toyota/carstate.py self.car_fingerprint = ', self.car_fingerprint #JP
+    print '   > [CarState(object).__init__()] self.car_fingerprint = ', self.car_fingerprint #JP
 
     # vEgo kalman filter
     dt = 0.01
@@ -122,9 +127,9 @@ class CarState(object):
     self.v_ego = 0.0
 
   def update(self, cp):
-    print '          > selfdrive/car/toyota/carstate.py CarState(object).update(cp)' #JP
-    print '             > cp = ', cp #JP
-    print '             > type(cp) ', type(cp) #JP
+    print '          > ***** CarState.update(cp) START ***** [selfdrive/car/toyota/carstate.py]' #JP
+    print '            > [CarState.update()] cp = ', cp #JP
+    #print '            > [CarState.update()] type(cp) ', type(cp) #JP
     # copy can_valid
     self.can_valid = cp.can_valid
 

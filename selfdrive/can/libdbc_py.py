@@ -2,7 +2,7 @@ import os
 import sys
 import subprocess
 
-from cffi import FFI
+from cffi import FFI # JP cffi = c foreign function interface.  Calls c functions from within Python
 
 can_dir = os.path.dirname(os.path.abspath(__file__))
 libdbc_fn = os.path.join(can_dir, "libdbc.so")

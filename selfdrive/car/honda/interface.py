@@ -232,18 +232,18 @@ class CarInterface(object):
       ret.longitudinalKpV = [1.2, 0.8, 0.5]
       ret.longitudinalKiBP = [0., 35.]
       ret.longitudinalKiV = [0.18, 0.12]
-    elif candidate == CAR.KIA: #JP
-      stop_and_go = False
-      ret.mass = 4303./2.205 + std_cargo #JP
-      ret.wheelbase = 2.81 #JP
-      ret.centerToFront = ret.wheelbase * 0.41 #JP
-      ret.steerRatio = 16.0 #JP
-      ret.steerKp, ret.steerKi = 0.38, 0.11 #JP
+#    elif candidate == CAR.KIA: #JP
+#      stop_and_go = False
+#      ret.mass = 4303./2.205 + std_cargo #JP
+#      ret.wheelbase = 2.81 #JP
+#      ret.centerToFront = ret.wheelbase * 0.41 #JP
+#      ret.steerRatio = 16.0 #JP
+#      ret.steerKp, ret.steerKi = 0.38, 0.11 #JP
 
-      ret.longitudinalKpBP = [0., 5., 35.] #JP
-      ret.longitudinalKpV = [1.2, 0.8, 0.5] #JP
-      ret.longitudinalKiBP = [0., 35.] #JP
-      ret.longitudinalKiV = [0.18, 0.12] #JP
+#      ret.longitudinalKpBP = [0., 5., 35.] #JP
+#      ret.longitudinalKpV = [1.2, 0.8, 0.5] #JP
+#      ret.longitudinalKiBP = [0., 35.] #JP
+#      ret.longitudinalKiV = [0.18, 0.12] #JP
     else:
       raise ValueError("unsupported car %s" % candidate)
 
